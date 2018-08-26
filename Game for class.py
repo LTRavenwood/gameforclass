@@ -65,13 +65,7 @@ class You(Character):
         self.defense = defense
         self.speed = speed
         self.team = team
-        
 
-    def input_name(self):
-        self.name = name
-        print('What is your name?')
-        name = input('>')
-        return name
 
     def act(self, players):
         all_enemy_locations = self.get_all_enemy_indices(players)
@@ -159,7 +153,7 @@ if __name__ == '__main__':
 
     battle = Battle(players=[player1, anime_male])
     battle.run()
-        
+    #Error message 'Put missing one required argument (item)'
 
 
 
