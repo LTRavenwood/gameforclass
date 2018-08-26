@@ -153,7 +153,7 @@ if __name__ == '__main__':
 
     battle = Battle(players=[player1, anime_male])
     battle.run()
-    #Error message 'Put missing one required argument (item)'
+    #Error message 'Put missing one required argument (item)Help'
 
 
 
