@@ -7,7 +7,13 @@ from dataclasses import dataclass, field
 # Start with the player's class
 class Character:
     """All the methods the game player can use"""
-    def __init__(self, name, hp, attack, defense, speed, team):
+    def __init__(self,
+            name: str,
+            hp: float,
+            attack: float,
+            defense: float,
+            speed: float,
+            team: int):
         self.name = name
         self.hp = hp
         self.attack = attack
@@ -17,25 +23,44 @@ class Character:
 
     def is_alive(self) -> bool:
         """returns true if the character is alive"""
-        return self.hp >= 1
+        return self.hp > 0
 
     def is_enemy(self, other_player) -> bool:
         """returns true if the player is an enemy"""
         return other_player.team != self.team
 
     def deal_damage(self, other_player):
-        """Deals damage when an attack is called"""
+        """Deals damage to another Character Object"""
         if other_player.is_alive:
-            other_player.hp -= self.attack
-            return other_player
+            other_player_block = False
+            while Other_player_block == False:
+                other_player.hp -= self.attack
+            else:
+                self.attack -= other_player.defense
+                other_player.hp -= self.attack 
+        return other_player
 
-    def get_all_enemy_indices(self, players: List) -> List[int]:
-        """Returns a list of enemies to choose a target from"""
-        return [index for index, player in self.players if player.is_alive and player.is_enemy]
+    def get_all_enemy_indices(self, players: List['Character']) -> List[int]:
+        """Returns a list of enemies to choose a target from
+            specifically returns if a target is alive and is an enemy"""
+        return [
+            index for index, player in self.players
+            if player.is_alive and player.is_enemy
+            ]
         
 
-    def attack(self, players):
-        """how the player attacks"""
+
+    def block(self):
+        if self.block():
+            other_player_block = True
+        else:
+            other_player_block = False
+
+    def act(self, players: List['Character']) -> List['Character']:
+        """A way of the characters to interact with one another
+            ie. an attack"""
+
+
         all_enemy_locations = self.get_all_enemy_indices(players)
         if all_enemy_locations:
             targeted_index = all_enemy_locations[0]
@@ -46,49 +71,73 @@ class Character:
         else:
             return players
 
-    def block(self, other_player):
-        """stops the other player from doing as much damage"""
-        if self.block:
-            if other_player.deal_damage(self):
-                other_player.attack -= player.defense
-                return other_player
-            return players
-        else:
-            return players
             
 
-class You(Character):
-    def __init__(self, name, hp, attack, defense, speed, team):
-        self.name = name
-        self.hp = hp
-        self.attack = attack
-        self.defense = defense
-        self.speed = speed
-        self.team = team
+class Ally(Character):
+    def __init__(self,
+                 name: str,
+                 hp: float,
+                 attack: float,
+                 defense: float,
+                 speed: float):
+        super().__init__(
+            name=name,
+            hp=hp,
+            attack=attack,
+            defense=defense,
+            speed=speed,
+            team=1
+        )
 
 
-    def act(self, players):
+    def act(self, players: List ['Character']) -> List['Character']:
+        """Overides the default method
+
+        Allows a user to select a supported action (attack, block)
+        and also determine if a target is attacking
+
+        :param players
+        """
         all_enemy_locations = self.get_all_enemy_indices(players)
-        print('What will you do?')
-        print('"w" to attack, or "s" to block')
-        if all_enemy_locations():
-            move_options = {'w': self.attack(other_player), 's': player.block(other_player)}
+        if all_enemy_locations:
+            print('What will you do?')
+            print('"w" to attack or "s" to block')
+            move_options = {'w': self.attack(), 's': self.block()}
             player_move = None
             while player_move == None:
                 move = input('>')
                 player_move = move_options.get(move)
-                return player_move
+        return player_move
+        
 
 class Enemy(Character):
-    def __init__(self, name, hp, attack, defense, speed, team):
-        self.name = name
-        self.hp = hp
-        self.attack = attack
-        self.defense = defense
-        self.speed = speed
-        self.team = team
+    def __init__(self,
+                 name: str,
+                 hp: float,
+                 attack: float,
+                 defense: float,
+                 speed: float):
+        super().__init__(
+            name=name,
+            hp=hp,
+            attack=attack,
+            defense=defense,
+            speed=speed,
+            team=2
+        )
+
 
     def act(self, players):
+        """Overides the default act method
+
+        randomly selects an action (attack, block) and if attacking,
+        randomly selects a valid target.
+
+        :param players
+        """
+
+        
+        
         all_enemy_locations = self.get_all_enemy_indices(players)
         if all_enemy_locations:
             move_options = ['attack', 'block']
@@ -104,7 +153,7 @@ class Enemy(Character):
 
 @dataclass(order=True)
 class Move:
-    priority: int
+    priority: float
     player: Character = field(compare=False)
 
 class Battle:
@@ -132,8 +181,10 @@ class Battle:
             if acting_player.is_alive():
                 updated_players = acting_player.act(self.players)
                 self.players = updated_players
-                print(f'Enemy HP: {anime_male.hp}')
-                print(f'Your HP: {player1.hp}')
+                print(
+                    [f'{player.name}\'s HP: {player.hp}'
+                     for player in self.players]
+                )
                 if acting_player.is_alive and acting_player.get_all_enemy_indices(self.players):
                     self.add_into_queue(acting_player, current_game_time)
             else:
@@ -148,12 +199,12 @@ if __name__ == '__main__':
     name = None
     while name == None:
         name = input('>')
-    player1 = You(name, 20, 10, 8, 7, 1)
-    anime_male = Enemy('Anime Male', 20, 8, 9, 4, 2)
+    player1 = Ally(name, 20, 10, 8, 7)
+    anime_male = Enemy('Anime Male', 20, 8, 9, 4)
 
     battle = Battle(players=[player1, anime_male])
     battle.run()
-    #Error message 'Put missing one required argument (item)Help'
+
 
 
 
