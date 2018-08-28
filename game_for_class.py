@@ -162,7 +162,7 @@ class Battle:
         self.battle_queue = PriorityQueue
 
     def add_into_queue(self, player: Character, game_time: int) -> None:
-        move = Move(priority=game_time + 1/player.speed, player=player)
+        move = Move(priority=game_time + 1.0/player.speed, player=player)
         self.battle_queue.put(move)
 
     def get_from_queue(self) -> Tuple[Character, int]:
