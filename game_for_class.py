@@ -8,70 +8,46 @@ from dataclasses import dataclass, field
 # Start with the player's class
 class Character:
     """All the methods the game player can use"""
-    def __init__(self,
-                 name: str,
-                 hp: float,
-                 attack: float,
-                 defense: float,
-                 speed: float,
-                 team: int):
+    def __init__(self, name: str, hp: float, attack: float, defense: float, speed: float, team: int):
+
         self.name = name
         self.hp = hp
         self.attack = attack
         self.defense = defense
         self.speed = speed
         self.team = team
+        """Initializes the Character"""
 
     def is_alive(self) -> bool:
-        """Returns true if the character is alive"""
+
+        """returns true if the player is alive"""
         return self.hp > 0
 
-    def is_enemy(self, other_player) -> bool:
-        """Returns true if the player is an enemy"""
-        return other_player.team != self.team
+    def is_ally(self, other_player) -> bool:
+        """returns true if the other player is an ally"""
+        return other_player.team == self.team
 
-    def deal_damage(self, other_player: 'Character') -> 'Character':
-        """Deals damage to another Charater Object
+    def get_all_enemy_indices(self, players: List['Character']) -> List[int]:
+        """returns a list of enemies to chose from"""
+        return [index for index, player in enumerate(players) if not self.is_ally(player) and player.is_alive()]
 
-        :param other_player: TODO: Fill in
-        :return: TODO: Fill in
-        """
-        if other_player.is_alive:
+    def deal_damage(self, other_player):
+        """deals damage to an enemy if they are alive"""
+        if other_player.is_alive():
             other_player.hp -= self.attack
-        # Alex: Moved this out of the if statement
-        # because this method wouldn't have returned a value if the other player
-        # was dead.
         return other_player
 
-    def get_all_enemy_indices(self,
-                              players: List['Character']) -> List[int]:
-        """Returns a list of enemies to choose a target from
+    def block(self, other_player) -> bool:
+        """Blocks for a little bit of damage before returning to normal damage"""
+        if self.block():
+            return self.block == True
+        if self.block == True:
+            other_player.attack -= self.defense
+        return self.block == False
 
-        Specifically, returns the indices in players that are characters
-        which are both enemies and alive
+    def act(self, players: List['Character']) -> List[int]:
+        all_enemy_locations = self.get_all_enemy_indices
 
-        :param players: TODO: Fill in
-        :return: TODO: Fill in
-        """
-        return [
-            index for index, player in players
-            if player.is_alive and player.is_enemy
-        ]
-
-    def attack(self,
-               players: List['Character']) -> List['Character']:
-        """Attack method for a player
-
-        TODO: Fill in what the default method does
-
-        Alex: I don't think you really need this. Think about what deal_damage already does
-        and the fact that you want to allow a player to select a target if you ever want to add
-        multiple opponents.
-
-        :param players: TODO: Fill in
-        :return: TODO: Fill in
-        """
-        all_enemy_locations = self.get_all_enemy_indices(players)
         if all_enemy_locations:
             targeted_index = all_enemy_locations[0]
             targeted_player = players[targeted_index]
@@ -81,15 +57,8 @@ class Character:
         else:
             return players
 
-    def block(self, other_player: 'Character'):
-        """stops the other player from doing as much damage
 
-        Alex: you need to rethink what this method really entails
-        your implementation was mixing return types (Sometimes with return a player,
-        other times a list of players
-        It could also PERMANENTLY alter an enemy's stats, which would be very confusing
-        My suggestion: Look into how to properly use self.defense and how to use that value
-        in self.deal_damage()
+
 
         :param players: TODO: Fill in
         :return: TODO: Fill in
@@ -103,154 +72,7 @@ class Character:
         #     return players
         raise NotImplementedError()
 
-    def act(self, players: List['Character']) -> List['Character']:
-        """TODO: Fill in
 
-        Alex: You need to implement a default act method
-
-        TODO: Fill in what the default method does
-
-        :param players: TODO: Fill in
-        :return: TODO: Fill in
-        """
-        raise NotImplementedError()
-
-
-# TODO: Change You to a better (more descriptive) class name
-class You(Character):
-    def __init__(self,
-                 name: str,
-                 hp: float,
-                 attack: float,
-                 defense: float,
-                 speed: float):
-        super().__init__(
-            name=name,
-            hp=hp,
-            attack=attack,
-            defense=defense,
-            speed=speed,
-            team=1
-        )
-
-    # def act(self, players):
-    #     all_enemy_locations = self.get_all_enemy_indices(players)
-    #     print('What will you do?')
-    #     print('"w" to attack, or "s" to block')
-    #     if all_enemy_locations:
-    #         move_options = {'w': self.attack, 's': player.block(other_player)}
-    #         player_move = None
-    #         while player_move == None:
-    #             move = input('>')
-    #             player_move = move_options.get(move)
-    #             return player_move
-
-    def act(self, players: List[Character]) -> List[Character]:
-        """Overrides the default act method,
-
-        Allows a user to select a supported action (attack, block)
-        and also determine a target if attacking
-
-        :param players: TODO: fill in
-        :return: TODO: fill in
-        """
-        raise NotImplementedError()
-
-
-class Enemy(Character):
-
-    def __init__(self,
-                 name: str,
-                 hp: float,
-                 attack: float,
-                 defense: float,
-                 speed: float):
-        super().__init__(
-            name=name,
-            hp=hp,
-            attack=attack,
-            defense=defense,
-            speed=speed,
-            team=2
-        )
-
-    # def act(self, players):
-    #
-    #     all_enemy_locations = self.get_all_enemy_indices(players)
-    #     if all_enemy_locations:
-    #         move_options = ['attack', 'block']
-    #         move = random.choice(move_options)
-    #         if move == 'attack':
-    #             self.attack(other_player)
-    #         if move == 'block':
-    #             self.block(other_player)
-    #             return move
-    def act(self, players: List[Character]) -> List[Character]:
-        """Overrides the default act method,
-
-        Randomly selects an action (attack, block) and if attacking, randomly
-        selects a valid target.
-
-        :param players: TODO: fill in
-        :return: TODO: fill in
-        """
-        raise NotImplementedError()
-
-
-@dataclass(order=True)
-class Move:
-    priority: float
-    player: Character = field(compare=False)
-
-
-class Battle:
-    def __init__(self, players: List[Character]):
-        self.players = players
-        self.battle_queue = PriorityQueue()
-
-    def add_into_queue(self, player: Character, game_time: int) -> None:
-        move = Move(priority=game_time + 1/player.speed, player=player)
-        self.battle_queue.put(move)
-
-    def get_from_queue(self) -> Tuple[Character, int]:
-        move = self.battle_queue.get()
-        return move.player, move.priority
-
-    def is_over(self) -> bool:
-        return self.battle_queue.empty()
-
-    def run(self):
-        for player in self.players:
-            self.add_into_queue(player=player, game_time=0)
-        while not self.is_over():
-            acting_player, current_game_time = self.get_from_queue()
-            if acting_player.is_alive():
-                updated_players = acting_player.act(self.players)
-                self.players = updated_players
-                print(
-                    [f'{player.name}\'s hp: {player.hp}'
-                     for player in self.players]
-                )
-                if acting_player.is_alive and acting_player.get_all_enemy_indices(self.players):
-                    self.add_into_queue(acting_player, current_game_time)
-            else:
-                print(f'{acting_player.name} was defeated!')
-        print('The battle is over')
-        print('survivors:')
-        print(f'{[player.name for player in self.players if player.is_alive()]}')
-
-
-if __name__ == '__main__':
-    print('What is your name?')
-    name = None
-    while name is None:
-        name = input('>')
-    player1 = You(name, 20, 10, 8, 7, 1)
-    anime_male = Enemy('Anime Male', 20, 8, 9, 4, 2)
-
-    battle = Battle(players=[player1, anime_male])
-    battle.run()
-    #Error message 'Put missing one required argument (item)Help'
 
 
 
