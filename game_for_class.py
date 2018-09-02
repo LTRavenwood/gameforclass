@@ -4,10 +4,12 @@ from typing import List, Tuple
 from queue import PriorityQueue
 from dataclasses import dataclass, field
 
+
 # Start with the player's class
 class Character:
     """All the methods the game player can use"""
     def __init__(self, name: str, hp: float, attack: float, defense: float, speed: float, team: int):
+
         self.name = name
         self.hp = hp
         self.attack = attack
@@ -17,6 +19,7 @@ class Character:
         """Initializes the Character"""
 
     def is_alive(self) -> bool:
+
         """returns true if the player is alive"""
         return self.hp > 0
 
@@ -44,6 +47,7 @@ class Character:
 
     def act(self, players: List['Character']) -> List[int]:
         all_enemy_locations = self.get_all_enemy_indices
+
         if all_enemy_locations:
             targeted_index = all_enemy_locations[0]
             targeted_player = players[targeted_index]
@@ -54,6 +58,19 @@ class Character:
             return players
 
 
+
+
+        :param players: TODO: Fill in
+        :return: TODO: Fill in
+        """
+        # if self.block:
+        #     if other_player.deal_damage(self):
+        #         other_player.attack -= player.defense
+        #         return other_player
+        #     return players
+        # else:
+        #     return players
+        raise NotImplementedError()
 
 
 
