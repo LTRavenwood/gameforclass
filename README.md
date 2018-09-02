@@ -1,2 +1,2 @@
-# gameforclass
-I am making a smaller battle script as a project for class
+# RPG
+this is a battle script I'm working on.
