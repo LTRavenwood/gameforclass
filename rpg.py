@@ -4,11 +4,6 @@ from queue import PriorityQueue
 from typing import List, Tuple
 import random
 
-# Name input
-print("What is your name?")
-name = ''
-while name == '':
-    name = input('>')
 
 
 # start with the character class
@@ -153,8 +148,8 @@ class Battle:
                         print(player.name + ':', player.hp)
             if acting_player.is_alive and acting_player.get_all_enemies(self.players):     
                 self.add_into_queue(acting_player, current_game_time)
-            else:
-                print(f'{acting_player.name} is dead!')
+        else:
+            print(f'{acting_player.name} is dead!')
 
         print('The battle is over')
         print('The following players survived:')
@@ -163,6 +158,10 @@ class Battle:
 
 
 if __name__ == '__main__':
+    print('What is your name?')
+    name = ''
+    while name == '':
+        name = input('>')
     player1 = Ally(name, 5, 3, 2)
     aqua = Ally('Aqua', 7, 4, 5)
     krillin = Enemy('Krillin', 5, 2, 2)
