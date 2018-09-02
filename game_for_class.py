@@ -15,38 +15,41 @@ class Character:
             attack: float,
             defense: float,
             speed: float,
-            team: int):
+            team: int
+            blocking: bool):
+        self.name = name
+        self.hp = hp
+        self.attack = attack
+        self.defense = defense
+        self.speed = speed
+        self.team = team
+        self.blocking = blocking
 
+            
 
     def is_alive(self) -> bool:
         return self.hp > 0
 
-    def is_enemy(self, other_player) -> bool:
-        """Returns true if the player is an enemy"""
-        return other_player.team != self.team
-
-
     def is_ally(self, other_player) -> bool:
-        """returns true if the other player is an ally"""
-        return other_player.team == self.team
+        """returns true if the player is an ally"""
+        return other_player.team = self.team
+
 
     def get_all_enemy_indices(self, players: List['Character']) -> List[int]:
         """returns a list of enemies to chose from"""
-        return [index for index, player in enumerate(players) if not self.is_ally(player) and player.is_alive()]
+        return [
+            index for index, player in enumerate(players)
+            if not self.is_ally(player) and player.is_alive()
+            ]
 
     def deal_damage(self, other_player):
         """deals damage to an enemy if they are alive"""
         if other_player.is_alive():
             other_player.hp -= self.attack
+            if other_player.blocking():
+                self.attack -= other_player.defense
         return other_player
 
-    def block(self, other_player) -> bool:
-        """Blocks for a little bit of damage before returning to normal damage"""
-        if self.block():
-            return self.block == True
-        if self.block == True:
-            other_player.attack -= self.defense
-        return self.block == False
 
     def act(self, players: List['Character']) -> List[int]:
         all_enemy_locations = self.get_all_enemy_indices
@@ -82,42 +85,31 @@ class Character:
 
     def attack(self,
                players: List['Character']) -> List['Character']:
-        """Attack method for a player
+        """Attack method for a player"""
+        if self.is_alive():
+            print(f'{self.name}\'s turn')
+            all_enemy_locations = self.get_all_enemy_indices(players)
+            if all_enemy_locations:
+                targeted_index = all_enemy_locations[0]
+                targeted_player = players[targeted index]
+                damaged_player = self.deal_damage(targeted_player)
+                if damaged_player.blocking == True:
+                    self.attack -= damaged_player.defense
+                    return damaged_player
+                damaged_player = players[targeted_index]
+            return players
+        else:
+            return players
 
-        TODO: Fill in what the default method does
-
-        Alex: I don't think you really need this. Think about what deal_damage already does
-        and the fact that you want to allow a player to select a target if you ever want to add
-        multiple opponents.
-
-        :param players: TODO: Fill in
-        :return: TODO: Fill in
-        """
-
-
-
-
-
-        :param players: TODO: Fill in
-        :return: TODO: Fill in
-        """
-        # if self.block:
-        #     if other_player.deal_damage(self):
-        #         other_player.attack -= player.defense
-        #         return other_player
-        #     return players
-        # else:
-        #     return players
-        raise NotImplementedError()
 
 
 if __name__ == '__main__':
     print('What is your name?')
     name = None
-    while name is None:
+    while name == None:
         name = input('>')
     player1 = Ally(name, 20, 10, 8, 7)
     anime_male = Enemy('Anime Male', 20, 8, 9, 4)
 
-    battle = Battle(players=[player1, anime_male])
-    battle.run()
+
+    
