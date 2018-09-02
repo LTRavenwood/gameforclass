@@ -8,20 +8,23 @@ from dataclasses import dataclass, field
 # Start with the player's class
 class Character:
     """All the methods the game player can use"""
-    def __init__(self, name: str, hp: float, attack: float, defense: float, speed: float, team: int):
+    def __init__(self,
 
-        self.name = name
-        self.hp = hp
-        self.attack = attack
-        self.defense = defense
-        self.speed = speed
-        self.team = team
-        """Initializes the Character"""
+            name: str,
+            hp: float,
+            attack: float,
+            defense: float,
+            speed: float,
+            team: int):
+
 
     def is_alive(self) -> bool:
-
-        """returns true if the player is alive"""
         return self.hp > 0
+
+    def is_enemy(self, other_player) -> bool:
+        """Returns true if the player is an enemy"""
+        return other_player.team != self.team
+
 
     def is_ally(self, other_player) -> bool:
         """returns true if the other player is an ally"""
@@ -48,14 +51,49 @@ class Character:
     def act(self, players: List['Character']) -> List[int]:
         all_enemy_locations = self.get_all_enemy_indices
 
-        if all_enemy_locations:
-            targeted_index = all_enemy_locations[0]
-            targeted_player = players[targeted_index]
-            damaged_player = self.deal_damage(targeted_player)
-            players[targeted_index] = damaged_player
-            return players
-        else:
-            return players
+
+    def deal_damage(self, other_player: 'Character') -> 'Character':
+        """Deals damage to another Charater Object
+
+        :param other_player: TODO: Fill in
+        :return: TODO: Fill in
+        """
+        if other_player.is_alive:
+            other_player.hp -= self.attack
+        # Alex: Moved this out of the if statement
+        # because this method wouldn't have returned a value if the other player
+        # was dead.
+        return other_player
+
+    def get_all_enemy_indices(self,
+                              players: List['Character']) -> List[int]:
+        """Returns a list of enemies to choose a target from
+
+        Specifically, returns the indices in players that are characters
+        which are both enemies and alive
+
+        :param players: TODO: Fill in
+        :return: TODO: Fill in
+        """
+        return [
+            index for index, player in players
+            if player.is_alive and player.is_enemy
+        ]
+
+    def attack(self,
+               players: List['Character']) -> List['Character']:
+        """Attack method for a player
+
+        TODO: Fill in what the default method does
+
+        Alex: I don't think you really need this. Think about what deal_damage already does
+        and the fact that you want to allow a player to select a target if you ever want to add
+        multiple opponents.
+
+        :param players: TODO: Fill in
+        :return: TODO: Fill in
+        """
+
 
 
 
@@ -73,14 +111,13 @@ class Character:
         raise NotImplementedError()
 
 
+if __name__ == '__main__':
+    print('What is your name?')
+    name = None
+    while name is None:
+        name = input('>')
+    player1 = Ally(name, 20, 10, 8, 7)
+    anime_male = Enemy('Anime Male', 20, 8, 9, 4)
 
-
-
-
-
-
-
-
-
-
-
+    battle = Battle(players=[player1, anime_male])
+    battle.run()

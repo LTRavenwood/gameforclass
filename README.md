@@ -15,3 +15,4 @@ attackers damage when damage is dealt.
 only one character out of the player and the enemy
 can remain to finish the script and a 'You win' or
 'You Lose' message would be needed.
+
