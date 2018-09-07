@@ -5,11 +5,8 @@ from typing import List, Tuple
 import random
 
 
-
-# start with the character class
-
 class Character:
-    # Class of characters
+    """All the methods a character in the game can perform"""
     def __init__(self, name: str, hp: int, attack: int, speed: int, team: int):
         self.name = name
         self.hp = hp
@@ -20,8 +17,6 @@ class Character:
     def is_alive(self) -> bool:
         """Returns true if the player if they are alive"""
         return self.hp > 0
-
-
 
     def is_ally(self, other_player) -> bool:
         """returns true if the player is an ally"""
@@ -37,7 +32,7 @@ class Character:
     def get_all_enemies(self, players: List) -> List[int]:
         return [
             index for index, player in enumerate(players)
-                if not self.is_ally(player) and player.is_alive()
+            if not self.is_ally(player) and player.is_alive()
         ]
 
     def act(self, players: List) -> List:
@@ -52,8 +47,6 @@ class Character:
             return players
         else:
             return players
-
-
 
 
 class Ally(Character):
@@ -76,14 +69,14 @@ class Ally(Character):
                     if not player.is_ally(self) and player.is_alive():
                         print(player.name)
                 targeted_enemy = None
-                while targeted_enemy == None:
+                while targeted_enemy is None:
                     user_input = input('>')
                     targeted_enemy = enemies.get(user_input)
-                    damaged_player = self.deal_damage(targeted_enemy)
-                    return players
-                else:
-                    return players
-    
+                damaged_player = self.deal_damage(targeted_enemy)
+
+        return players
+
+
 class Enemy(Character):
     # another subclass of character
     """this is a subclass of characters specific to team 2"""
@@ -105,7 +98,7 @@ class Enemy(Character):
 @dataclass(order=True)
 class Move:
     """Handles the priority Queue"""
-    priority: int
+    priority: float
     player: Character = field(compare=False)
     
 
@@ -145,17 +138,17 @@ class Battle:
                 self.players = updated_players
                 for player in self.players:
                     if player.is_alive():
-                        print(player.name + ':', player.hp)
-            if acting_player.is_alive and acting_player.get_all_enemies(self.players):     
-                self.add_into_queue(acting_player, current_game_time)
-        else:
-            print(f'{acting_player.name} is dead!')
+                        print(f'{player.name}')
+                        print(f'HP: {player.hp}')
+                if acting_player.is_alive and acting_player.get_all_enemies(self.players):
+                    self.add_into_queue(acting_player, current_game_time)
+            else:
+                print(f'{acting_player.name} is dead')
 
         print('The battle is over')
         print('The following players survived:')
         print(f'{[player.name for player in self.players if player.is_alive()]}')
-        time.sleep(3)
-
+        
 
 if __name__ == '__main__':
     print('What is your name?')
@@ -163,7 +156,7 @@ if __name__ == '__main__':
     while name == '':
         name = input('>')
     player1 = Ally(name, 5, 3, 2)
-    aqua = Ally('Aqua', 7, 4, 5)
+    aqua = Ally('Aqua', 7, 4, 3)
     krillin = Enemy('Krillin', 5, 2, 2)
     yamcha = Enemy('Yamcha', 6, 3, 1)
 

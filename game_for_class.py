@@ -9,13 +9,12 @@ from dataclasses import dataclass, field
 class Character:
     """All the methods the game player can use"""
     def __init__(self,
-
             name: str,
             hp: float,
             attack: float,
             defense: float,
             speed: float,
-            team: int
+            team: int,
             blocking: bool):
         self.name = name
         self.hp = hp
@@ -25,35 +24,12 @@ class Character:
         self.team = team
         self.blocking = blocking
 
-            
-
     def is_alive(self) -> bool:
         return self.hp > 0
 
     def is_ally(self, other_player) -> bool:
         """returns true if the player is an ally"""
-        return other_player.team = self.team
-
-
-    def get_all_enemy_indices(self, players: List['Character']) -> List[int]:
-        """returns a list of enemies to chose from"""
-        return [
-            index for index, player in enumerate(players)
-            if not self.is_ally(player) and player.is_alive()
-            ]
-
-    def deal_damage(self, other_player):
-        """deals damage to an enemy if they are alive"""
-        if other_player.is_alive():
-            other_player.hp -= self.attack
-            if other_player.blocking():
-                self.attack -= other_player.defense
-        return other_player
-
-
-    def act(self, players: List['Character']) -> List[int]:
-        all_enemy_locations = self.get_all_enemy_indices
-
+        return other_player.team == self.team
 
     def deal_damage(self, other_player: 'Character') -> 'Character':
         """Deals damage to another Charater Object
@@ -63,9 +39,6 @@ class Character:
         """
         if other_player.is_alive:
             other_player.hp -= self.attack
-        # Alex: Moved this out of the if statement
-        # because this method wouldn't have returned a value if the other player
-        # was dead.
         return other_player
 
     def get_all_enemy_indices(self,
@@ -80,7 +53,7 @@ class Character:
         """
         return [
             index for index, player in players
-            if player.is_alive and player.is_enemy
+            if player.is_alive and  not player.is_ally
         ]
 
     def attack(self,
@@ -91,16 +64,19 @@ class Character:
             all_enemy_locations = self.get_all_enemy_indices(players)
             if all_enemy_locations:
                 targeted_index = all_enemy_locations[0]
-                targeted_player = players[targeted index]
+                targeted_player = players[targeted_index]
                 damaged_player = self.deal_damage(targeted_player)
-                if damaged_player.blocking == True:
+                if damaged_player.blocking is True:
                     self.attack -= damaged_player.defense
-                    return damaged_player
                 damaged_player = players[targeted_index]
+                return damaged_player
             return players
         else:
             return players
 
+    def block(self, other_player) -> bool:
+        if other_player.attack(self):
+            return self.blocking == True
 
 
 if __name__ == '__main__':
@@ -108,8 +84,6 @@ if __name__ == '__main__':
     name = None
     while name == None:
         name = input('>')
-    player1 = Ally(name, 20, 10, 8, 7)
-    anime_male = Enemy('Anime Male', 20, 8, 9, 4)
+    player1 = Character(name, 20, 10, 8, 7, 1, False)
+    anime_male = Character('Anime Male', 20, 8, 9, 4, 2, False)
 
-
-    
