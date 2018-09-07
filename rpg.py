@@ -7,12 +7,19 @@ import random
 
 class Character:
     """All the methods a character in the game can perform"""
-    def __init__(self, name: str, hp: int, attack: int, speed: int, team: int):
+    def __init__(self,
+                 name: str,
+                 hp: int,
+                 attack: int,
+                 speed: int,
+                 team: int,
+                 level: int):
         self.name = name
         self.hp = hp
         self.attack = attack
         self.speed = speed
         self.team = team
+        self.level = level
 
     def is_alive(self) -> bool:
         """Returns true if the player if they are alive"""
@@ -53,7 +60,7 @@ class Ally(Character):
     # subclass of character
     """This is a subclass of characters specific to team 1"""
     def __init__(self, name: str, hp: int, attack: int, speed: int):
-        super().__init__(name, hp, attack, speed, team=1)
+        super().__init__(name, hp, attack, speed, team=1, level=1)
 
     def act(self, players):
         """the act method specific to team 1"""
@@ -81,7 +88,7 @@ class Enemy(Character):
     # another subclass of character
     """this is a subclass of characters specific to team 2"""
     def __init__(self, name: str, hp: int, attack: int, speed: int):
-        super().__init__(name, hp, attack, speed, team=2)
+        super().__init__(name, hp, attack, speed, team=2, level=1)
 
     def act(self, players):
         all_enemy_locations = self.get_all_enemies(players)
@@ -138,7 +145,7 @@ class Battle:
                 self.players = updated_players
                 for player in self.players:
                     if player.is_alive():
-                        print(f'{player.name}')
+                        print(f'{player.name}: {player.level}')
                         print(f'HP: {player.hp}')
                 if acting_player.is_alive and acting_player.get_all_enemies(self.players):
                     self.add_into_queue(acting_player, current_game_time)
@@ -146,9 +153,13 @@ class Battle:
                 print(f'{acting_player.name} is dead')
 
         print('The battle is over')
-        print('The following players survived:')
-        print(f'{[player.name for player in self.players if player.is_alive()]}')
-        
+    for player in self.players:
+        if player.is_alive():
+            if player.team == 1:
+                print('You win!')
+            elif not player.team == 2:
+                print('You Lose')
+
 
 if __name__ == '__main__':
     print('What is your name?')
