@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-import time
 from queue import PriorityQueue
 from typing import List, Tuple
 import random
@@ -62,7 +61,7 @@ class Ally(Character):
     # subclass of character
     """This is a subclass of characters specific to team 1"""
     def __init__(self, name: str, hp: int, attack: int, speed: int):
-        super().__init__(name, hp, attack, speed, team=1, level=1, exp=0, target_exp=200)
+        super().__init__(name, hp, attack, speed, team=1, level=1, exp=0, target_exp=200
 
     def act(self, players):
         """the act method specific to team 1"""
@@ -91,6 +90,7 @@ class Enemy(Character):
     """this is a subclass of characters specific to team 2"""
     def __init__(self, name: str, hp: int, attack: int, speed: int):
         super().__init__(name, hp, attack, speed, team=2, level=1, exp=0, target_exp=200)
+
 
     def act(self, players):
         all_enemy_locations = self.get_all_enemies(players)
@@ -184,6 +184,7 @@ class Battle:
             self.level_up()
         if self.defeat():
             print('You lose!')
+
 
 
 if __name__ == '__main__':
