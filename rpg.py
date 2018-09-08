@@ -47,6 +47,12 @@ class Character:
             if not self.is_ally(player) and player.is_alive()
         ]
 
+    def get_all_allies(self, players: List) -> List[int]:
+        return[
+            index for index, player in enumerate(players)
+            if self.team == 1 and self.is_alive()
+        ]
+
     def act(self, players: List) -> List:
         all_enemy_locations = self.get_all_enemies(players)
         if all_enemy_locations:
@@ -58,29 +64,13 @@ class Character:
             players[targeted_index] = damaged_player
         return players
 
-    def view_stats(self, players):
-        for character in players:
-            if self.is_alive() and self.is_ally():
-                print(f'{character.name} LV: {character.level}')
-                print(f'HP: {character.hp}/{character.max_hp}')
-                print(f'Attack: {character.attack}')
-                print(f'Speed: {character.speed}')
-
-    def fight(self, players):
-        for character in players:
-            actions = {'fight': character.act, 'stats': character.view_stats}
-            print('What will you do?')
-            print('fight')
-            print('stats')
-            action = None
-            while action is None:
-                player_input = input('>')
-                action = actions.get(player_input)
-                print(action)
-                if action == 'fight':
-                    character.act(players)
-                if action == 'stats':
-                    character.view_stats(players)
+    def view_stats(self, players: List) -> List['Character']:
+        for player in self.players:
+            if character.is_alive() and character.team == 1:
+                print(f'{player.name} LV: {player.level}')
+                print(f'HP: {player.hp}/{player.max_hp}')
+                print(f'Attack: {player.attack}')
+                print(f'Speed: {player.speed}')
             return players
 
 
@@ -89,22 +79,6 @@ class Ally(Character):
     """This is a subclass of characters specific to team 1"""
     def __init__(self, name: str, hp: int, max_hp: int, attack: int, speed: int):
         super().__init__(name, hp, max_hp, attack, speed, team=1, level=1, exp=0, target_exp=200)
-
-    def fight(self, players):
-        for character in players:
-            actions = {'fight': character.act, 'stats': character.view_stats}
-            print('What will you do?')
-            print('fight')
-            print('stats')
-            action = None
-            while action is None:
-                player_input = input('>')
-                action = actions.get(player_input)
-                if action == 'fight':
-                    character.act(players)
-                if action == 'stats':
-                    character.view_stats(players)
-            return players
 
     def act(self, players):
         """the act method specific to team 1"""
@@ -215,11 +189,16 @@ class Battle:
 
         while not self.is_over():
             acting_player, current_game_time = self.get_from_queue()
+            actions = {'fight': acting_player.act(self.players), 'stats': acting_player.view_stats(self.players)}
             if acting_player.is_alive():
-                updated_action = acting_player.fight(self.players)
-                self.players = updated_action
-                updated_players = acting_player.act(self.players)
-                self.players = updated_players
+                if acting_player.team == 1:
+                    action = None
+                    while action is None:
+                        player_input = input('>')
+                        action = actions.get(player_input)
+                        print(action)
+                else:
+                    acting_player.act(self.players)
                 for player in self.players:
                     if player.is_alive():
                         print(f'{player.name} LV: {player.level}')
