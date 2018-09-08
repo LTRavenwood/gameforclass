@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-import time
 from queue import PriorityQueue
 from typing import List, Tuple
 import random
@@ -16,6 +15,15 @@ class Character:
                  level: int,
                  exp: int,
                  target_exp: int):
+        self.name = name
+        self.hp = hp
+        self.attack = attack
+        self.speed = speed
+        self.team = team
+        self.level = level
+        self.exp = exp
+        self.target_exp = target_exp
+
 
     def is_alive(self) -> bool:
         """Returns true if the player if they are alive"""
@@ -31,7 +39,7 @@ class Character:
             other_player.hp -= self.attack
             print(f'{self.name} attacked {other_player.name} for {self.attack} damage')
         return other_player
-    
+
     def get_all_enemies(self, players: List) -> List[int]:
         return [
             index for index, player in enumerate(players)
@@ -101,7 +109,7 @@ class Move:
     """Handles the priority Queue"""
     priority: float
     player: Character = field(compare=False)
-    
+
 
 class Battle:
     """list of characters, and order of moves"""
@@ -164,7 +172,6 @@ class Battle:
                 self.players = updated_players
                 for player in self.players:
                     if player.is_alive():
-
                         print(f'{player.name} LV: {player.level}')
                         print(f'HP: {player.hp}')
                 if acting_player.is_alive and acting_player.get_all_enemies(self.players):
