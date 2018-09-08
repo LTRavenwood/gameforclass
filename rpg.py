@@ -38,7 +38,7 @@ class Character:
             other_player.hp -= self.attack
             print(f'{self.name} attacked {other_player.name} for {self.attack} damage')
         return other_player
-    
+
     def get_all_enemies(self, players: List) -> List[int]:
         return [
             index for index, player in enumerate(players)
@@ -61,6 +61,7 @@ class Ally(Character):
     # subclass of character
     """This is a subclass of characters specific to team 1"""
     def __init__(self, name: str, hp: int, attack: int, speed: int):
+
         super().__init__(name, hp, attack, speed, team=1, level=1, exp=0, target_exp=200)
 
     def act(self, players):
@@ -108,7 +109,7 @@ class Move:
     """Handles the priority Queue"""
     priority: float
     player: Character = field(compare=False)
-    
+
 
 class Battle:
     """list of characters, and order of moves"""
