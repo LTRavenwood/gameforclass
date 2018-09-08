@@ -162,7 +162,7 @@ if __name__ == '__main__':
 
     battle = Battle(players=[player1, aqua, krillin, yamcha])
     battle.run()
-
+    
 
 
 
