@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-import time
 from queue import PriorityQueue
 from typing import List, Tuple
 import random
@@ -13,13 +12,17 @@ class Character:
                  attack: int,
                  speed: int,
                  team: int,
-                 level: int):
+                 level: int,
+                 exp: int,
+                 target_exp: int):
         self.name = name
         self.hp = hp
         self.attack = attack
         self.speed = speed
         self.team = team
         self.level = level
+        self.exp = exp
+        self.target_exp = target_exp
 
     def is_alive(self) -> bool:
         """Returns true if the player if they are alive"""
@@ -35,7 +38,7 @@ class Character:
             other_player.hp -= self.attack
             print(f'{self.name} attacked {other_player.name} for {self.attack} damage')
         return other_player
-    
+
     def get_all_enemies(self, players: List) -> List[int]:
         return [
             index for index, player in enumerate(players)
@@ -51,16 +54,14 @@ class Character:
             targeted_player = players[targeted_index]
             damaged_player = self.deal_damage(targeted_player)
             players[targeted_index] = damaged_player
-            return players
-        else:
-            return players
+        return players
 
 
 class Ally(Character):
     # subclass of character
     """This is a subclass of characters specific to team 1"""
     def __init__(self, name: str, hp: int, attack: int, speed: int):
-        super().__init__(name, hp, attack, speed, team=1, level=1)
+        super().__init__(name, hp, attack, speed, team=1, level=1, exp=0, target_exp=200
 
     def act(self, players):
         """the act method specific to team 1"""
@@ -88,7 +89,8 @@ class Enemy(Character):
     # another subclass of character
     """this is a subclass of characters specific to team 2"""
     def __init__(self, name: str, hp: int, attack: int, speed: int):
-        super().__init__(name, hp, attack, speed, team=2, level=1)
+        super().__init__(name, hp, attack, speed, team=2, level=1, exp=0, target_exp=200)
+
 
     def act(self, players):
         all_enemy_locations = self.get_all_enemies(players)
@@ -107,7 +109,7 @@ class Move:
     """Handles the priority Queue"""
     priority: float
     player: Character = field(compare=False)
-    
+
 
 class Battle:
     """list of characters, and order of moves"""
@@ -131,10 +133,35 @@ class Battle:
         """true if the battle is over"""
         return self.battle_queue.empty()
 
+    def victory(self) -> bool:
+        """returns true if the allies win"""
+        if self.is_over():
+            if player1.is_alive() or aqua.is_alive():
+                victory = True
+                return victory
+
+    def defeat(self) -> bool:
+        """Returns true if the enemies win"""
+        if self.is_over():
+            if player1.get_all_enemies(self.players):
+                defeat = True
+                return defeat
+
+    def level_up(self):
+        exp_gain = 200
+        for player in self.players:
+            if player.is_alive():
+                player.exp += exp_gain
+                print(f'{player.name} gained {exp_gain} experience points!')
+                if player.exp >= player.target_exp:
+                    print(f'{player.name} leveled up!')
+                    player.level += 1
+                    player.target_exp *= 2
+                    player.exp = 0
+
     def run(self):
         """Makes the battle loop while it's not over"""
-        print('Battle Begin!')
-        print(f'Combatants: {[player.name for player in self.players]}')
+        print(f'{[player.name for player in self.players if player.team != 1]} appeared!')
         for player in self.players:
             self.add_into_queue(player=player, game_time=0)
 
@@ -145,20 +172,19 @@ class Battle:
                 self.players = updated_players
                 for player in self.players:
                     if player.is_alive():
-                        print(f'{player.name}: {player.level}')
+                        print(f'{player.name} LV: {player.level}')
                         print(f'HP: {player.hp}')
                 if acting_player.is_alive and acting_player.get_all_enemies(self.players):
                     self.add_into_queue(acting_player, current_game_time)
             else:
                 print(f'{acting_player.name} is dead')
 
-        print('The battle is over')
-    for player in self.players:
-        if player.is_alive():
-            if player.team == 1:
-                print('You win!')
-            elif not player.team == 2:
-                print('You Lose')
+        if self.victory():
+            print('You win')
+            self.level_up()
+        if self.defeat():
+            print('You lose!')
+
 
 
 if __name__ == '__main__':
@@ -173,10 +199,3 @@ if __name__ == '__main__':
 
     battle = Battle(players=[player1, aqua, krillin, yamcha])
     battle.run()
-
-
-
-
-
-
-
