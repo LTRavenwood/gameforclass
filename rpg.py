@@ -16,14 +16,6 @@ class Character:
                  level: int,
                  exp: int,
                  target_exp: int):
-        self.name = name
-        self.hp = hp
-        self.attack = attack
-        self.speed = speed
-        self.team = team
-        self.level = level
-        self.exp = exp
-        self.target_exp = target_exp
 
     def is_alive(self) -> bool:
         """Returns true if the player if they are alive"""
@@ -172,6 +164,7 @@ class Battle:
                 self.players = updated_players
                 for player in self.players:
                     if player.is_alive():
+
                         print(f'{player.name} LV: {player.level}')
                         print(f'HP: {player.hp}')
                 if acting_player.is_alive and acting_player.get_all_enemies(self.players):
@@ -180,7 +173,7 @@ class Battle:
                 print(f'{acting_player.name} is dead')
 
         if self.victory():
-            print('You win')
+            print('You win!')
             self.level_up()
         if self.defeat():
             print('You lose!')
