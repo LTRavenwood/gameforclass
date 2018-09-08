@@ -9,6 +9,7 @@ class Character:
     def __init__(self,
                  name: str,
                  hp: int,
+                 max_hp: int,
                  attack: int,
                  speed: int,
                  team: int,
@@ -17,6 +18,7 @@ class Character:
                  target_exp: int):
         self.name = name
         self.hp = hp
+        self.max_hp = max_hp
         self.attack = attack
         self.speed = speed
         self.team = team
@@ -60,8 +62,8 @@ class Character:
 class Ally(Character):
     # subclass of character
     """This is a subclass of characters specific to team 1"""
-    def __init__(self, name: str, hp: int, attack: int, speed: int):
-        super().__init__(name, hp, attack, speed, team=1, level=1, exp=0, target_exp=200)
+    def __init__(self, name: str, hp: int, max_hp: int, attack: int, speed: int):
+        super().__init__(name, hp, max_hp, attack, speed, team=1, level=1, exp=0, target_exp=200)
 
     def act(self, players):
         """the act method specific to team 1"""
@@ -88,8 +90,8 @@ class Ally(Character):
 class Enemy(Character):
     # another subclass of character
     """this is a subclass of characters specific to team 2"""
-    def __init__(self, name: str, hp: int, attack: int, speed: int):
-        super().__init__(name, hp, attack, speed, team=2, level=1, exp=0, target_exp=200)
+    def __init__(self, name: str, hp: int, max_hp: int, attack: int, speed: int):
+        super().__init__(name, hp, max_hp, attack, speed, team=2, level=1, exp=0, target_exp=200)
 
     def act(self, players):
         all_enemy_locations = self.get_all_enemies(players)
@@ -155,8 +157,15 @@ class Battle:
                 if player.exp >= player.target_exp:
                     print(f'{player.name} leveled up!')
                     player.level += 1
+                    player.max_hp += 2
+                    player.hp = player.max_hp
+                    player.attack += 1
+                    player.speed += 1
                     player.target_exp *= 2
                     player.exp = 0
+                    print(f'HP: {player.hp}/{player.max_hp}')
+                    print(f'attack: {player.attack}')
+                    print(f'speed: {player.speed}')
 
     def run(self):
         """Makes the battle loop while it's not over"""
@@ -172,7 +181,7 @@ class Battle:
                 for player in self.players:
                     if player.is_alive():
                         print(f'{player.name} LV: {player.level}')
-                        print(f'HP: {player.hp}')
+                        print(f'HP: {player.hp}/{player.max_hp}')
                 if acting_player.is_alive and acting_player.get_all_enemies(self.players):
                     self.add_into_queue(acting_player, current_game_time)
             else:
@@ -190,10 +199,13 @@ if __name__ == '__main__':
     name = ''
     while name == '':
         name = input('>')
-    player1 = Ally(name, 5, 3, 2)
-    aqua = Ally('Aqua', 7, 4, 3)
-    krillin = Enemy('Krillin', 5, 2, 2)
-    yamcha = Enemy('Yamcha', 6, 3, 1)
-
+    player1 = Ally(name, 5, 5, 3, 2)
+    aqua = Ally('Aqua', 7, 7, 4, 3)
+    krillin = Enemy('Krillin', 5, 5, 2, 2)
+    yamcha = Enemy('Yamcha', 6, 6, 3, 1)
+    anime_male = Enemy('Anime Male', 5, 5, 2, 2)
     battle = Battle(players=[player1, aqua, krillin, yamcha])
+    battle1 = Battle(players=[player1, anime_male])
+    battle1.run()
+    print(f'{aqua.name} joined!')
     battle.run()
