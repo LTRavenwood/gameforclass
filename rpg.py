@@ -38,7 +38,7 @@ class Character:
             other_player.hp -= self.attack
             print(f'{self.name} attacked {other_player.name} for {self.attack} damage')
         return other_player
-    
+
     def get_all_enemies(self, players: List) -> List[int]:
         return [
             index for index, player in enumerate(players)
@@ -61,7 +61,7 @@ class Ally(Character):
     # subclass of character
     """This is a subclass of characters specific to team 1"""
     def __init__(self, name: str, hp: int, attack: int, speed: int):
-        super().__init__(name, hp, attack, speed, team=1, level=1, exp=0, target_exp=200
+        super().__init__(name, hp, attack, speed, team=1, level=1, exp=0, target_exp=200)
 
     def act(self, players):
         """the act method specific to team 1"""
@@ -91,7 +91,6 @@ class Enemy(Character):
     def __init__(self, name: str, hp: int, attack: int, speed: int):
         super().__init__(name, hp, attack, speed, team=2, level=1, exp=0, target_exp=200)
 
-
     def act(self, players):
         all_enemy_locations = self.get_all_enemies(players)
         if all_enemy_locations:
@@ -109,7 +108,7 @@ class Move:
     """Handles the priority Queue"""
     priority: float
     player: Character = field(compare=False)
-    
+
 
 class Battle:
     """list of characters, and order of moves"""
@@ -180,11 +179,10 @@ class Battle:
                 print(f'{acting_player.name} is dead')
 
         if self.victory():
-            print('You win')
+            print('You win!')
             self.level_up()
         if self.defeat():
             print('You lose!')
-
 
 
 if __name__ == '__main__':
