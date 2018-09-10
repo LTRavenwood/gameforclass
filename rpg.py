@@ -3,14 +3,16 @@ from queue import PriorityQueue
 from typing import List, Tuple
 import random
 
-inventory = ['potion']
-
 class Item:
     def __init__(self,
                  name: str,
                  hp_restore: int):
         self.name = name
         self.hp_restore = hp_restore
+
+
+inventory = []
+
 
 
 class Character:
@@ -23,8 +25,8 @@ class Character:
                  speed: int,
                  team: int,
                  level: int,
-                 exp: int,
-                 target_exp: int):
+                 exp: int,  # The exp value of the player
+                 target_exp: int):  # The target exp value required for the player to level up
         self.name = name
         self.hp = hp
         self.max_hp = max_hp
@@ -51,18 +53,21 @@ class Character:
         return other_player
 
     def get_all_enemies(self, players: List) -> List[int]:
+        """returns the location of all enemy players in a list"""
         return [
             index for index, player in enumerate(players)
             if not self.is_ally(player) and player.is_alive()
         ]
 
     def get_all_allies(self, players: List) -> List[int]:
+        """returns the locations of all ally players in a list"""
         return[
             index for index, player in enumerate(players)
-            if self.team == 1 and self.is_alive()
+            if self.is_ally(player1) and self.is_alive()
         ]
 
     def act(self, players: List) -> List:
+        """how one player acts upon another, eg. an attack"""
         all_enemy_locations = self.get_all_enemies(players)
         if all_enemy_locations:
             if self.is_alive:
@@ -77,8 +82,21 @@ class Character:
 class Ally(Character):
     # subclass of character
     """This is a subclass of characters specific to team 1"""
-    def __init__(self, name: str, hp: int, max_hp: int, attack: int, speed: int):
-        super().__init__(name, hp, max_hp, attack, speed, team=1, level=1, exp=0, target_exp=200)
+    def __init__(self,
+                 name: str,
+                 hp: int,
+                 max_hp: int,
+                 attack: int,
+                 speed: int):
+        super().__init__(name,
+                         hp,
+                         max_hp,
+                         attack,
+                         speed,
+                         team=1,
+                         level=1,
+                         exp=0,
+                         target_exp=200)
 
     def act(self, players):
         """the act method specific to team 1"""
@@ -108,14 +126,47 @@ class Ally(Character):
             if move == 'fight':
                 pass
             elif move == 'item':
-                print(inventory)
+                self.use_item()
+            else:
+                self.move_input()
             return move
+
+    def use_item(self):
+        if potion.name in inventory:
+            print(f'would you like to use {potion.name}?')
+            print('[y]es or [n] no')
+            item_input = input('>')
+            if item_input == 'y':
+                if self.hp < self.max_hp:
+                    self.hp += potion.hp_restore
+                    inventory.remove(potion.name)
+                else:
+                    print('It won\'t help')
+                    self.move_input()
+            if item_input == 'n':
+                self.move_input()
+        else:
+            print('Your inventory is empty')
+            self.move_input()
 
 class Enemy(Character):
     # another subclass of character
     """this is a subclass of characters specific to team 2"""
-    def __init__(self, name: str, hp: int, max_hp: int, attack: int, speed: int):
-        super().__init__(name, hp, max_hp, attack, speed, team=2, level=1, exp=0, target_exp=200)
+    def __init__(self,
+                 name: str,
+                 hp: int,
+                 max_hp: int,
+                 attack: int,
+                 speed: int):
+        super().__init__(name,
+                         hp,
+                         max_hp,
+                         attack,
+                         speed,
+                         team=2,
+                         level=1,
+                         exp=0,
+                         target_exp=200)
 
     def act(self, players):
         all_enemy_locations = self.get_all_enemies(players)
@@ -127,8 +178,6 @@ class Enemy(Character):
             return players
         else:
             return players
-
-
 
 
 @dataclass(order=True)
@@ -228,14 +277,17 @@ if __name__ == '__main__':
     name = ''
     while name == '':
         name = input('>')
-    player1 = Ally(name, 5, 5, 3, 2)
-    aqua = Ally('Aqua', 7, 7, 4, 3)
-    krillin = Enemy('Krillin', 5, 5, 2, 2)
-    yamcha = Enemy('Yamcha', 6, 6, 3, 1)
-    anime_male = Enemy('Anime Male', 5, 5, 2, 2)
-    potion = Item('potion', 5)
+    player1 = Ally(name=name, hp=5, max_hp=5, attack=3, speed=2)
+    aqua = Ally(name='Aqua', hp=7, max_hp=7, attack=4, speed=3)
+    krillin = Enemy(name='Krillin', hp=5, max_hp=5, attack=2, speed=2)
+    yamcha = Enemy(name='Yamcha', hp=6, max_hp=6, attack=3, speed=1)
+    anime_male = Enemy(name='Anime Male', hp=5, max_hp=5, attack=2, speed=2)
+    potion = Item(name='potion', hp_restore=5)
     battle = Battle(players=[player1, aqua, krillin, yamcha])
     battle1 = Battle(players=[player1, anime_male])
     battle1.run()
+    inventory.append(potion.name)
+    print(f'You found a {potion.name}')
+    print(inventory)
     print(f'{aqua.name} joined!')
     battle.run()
