@@ -119,14 +119,19 @@ class Ally(Character):
         return players
 
     def move_input(self):
+        print('what will you do?')
+        print('[f]ight, [i]tem, [s]tats')
         move = None
         while move is None:
             m_input = input('>')
             move = m_input
-            if move == 'fight':
+            if move == 'f':
                 pass
-            elif move == 'item':
+            elif move == 'i':
                 self.use_item()
+            elif move == 's':
+                self.get_stats()
+                self.move_input()
             else:
                 self.move_input()
             return move
@@ -148,6 +153,18 @@ class Ally(Character):
         else:
             print('Your inventory is empty')
             self.move_input()
+
+    def get_stats(self):
+        """prints out the player's important stats"""
+        if self.is_alive():
+            stats = {
+                'name': self.name,
+                'hp/max hp': f'{self.hp}/{self.max_hp}',
+                'attack': self.attack,
+                'speed': self.speed
+            }
+            print(stats)
+
 
 class Enemy(Character):
     # another subclass of character
@@ -288,6 +305,5 @@ if __name__ == '__main__':
     battle1.run()
     inventory.append(potion.name)
     print(f'You found a {potion.name}')
-    print(inventory)
     print(f'{aqua.name} joined!')
     battle.run()
