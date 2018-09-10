@@ -2,6 +2,8 @@ from dataclasses import dataclass, field
 from queue import PriorityQueue
 from typing import List, Tuple
 import random
+import time
+
 
 class Item:
     def __init__(self,
@@ -12,7 +14,6 @@ class Item:
 
 
 inventory = []
-
 
 
 class Character:
@@ -71,11 +72,10 @@ class Character:
         all_enemy_locations = self.get_all_enemies(players)
         if all_enemy_locations:
             if self.is_alive:
-                print(f'{self.name}\'s turn!')
-            targeted_index = all_enemy_locations[0]
-            targeted_player = players[targeted_index]
-            damaged_player = self.deal_damage(targeted_player)
-            players[targeted_index] = damaged_player
+                targeted_index = all_enemy_locations[0]
+                targeted_player = players[targeted_index]
+                damaged_player = self.deal_damage(targeted_player)
+                players[targeted_index] = damaged_player
         return players
 
 
@@ -100,27 +100,27 @@ class Ally(Character):
 
     def act(self, players):
         """the act method specific to team 1"""
+
         all_enemy_locations = self.get_all_enemies(players)
         enemies = {character.name:
                    character for character in players if character.team != 1}
         if all_enemy_locations:
             if self.is_alive:
-                print(f'{self.name}\'s turn!')
-                print('Who do you attack?')
-                for player in players:
-                    if not player.is_ally(self) and player.is_alive():
-                        print(player.name)
-                targeted_enemy = None
-                while targeted_enemy is None:
-                    user_input = input('>')
-                    targeted_enemy = enemies.get(user_input)
-                damaged_player = self.deal_damage(targeted_enemy)
+                if all_enemy_locations.count(1):
+                    targeted_index = all_enemy_locations[0]
+                    targeted_player = players[targeted_index]
+                    damaged_player = self.deal_damage(targeted_player)
+                    players[targeted_index] = damaged_player
+                else:
+                    targeted_enemy = None
+                    while targeted_enemy is None:
+                        user_input = input('>')
+                        targeted_enemy = enemies.get(user_input)
+                    damaged_player = self.deal_damage(targeted_enemy)
 
         return players
 
     def move_input(self):
-        print('what will you do?')
-        print('[f]ight, [i]tem, [s]tats')
         move = None
         while move is None:
             m_input = input('>')
@@ -262,6 +262,7 @@ class Battle:
     def run(self):
         """Makes the battle loop while it's not over"""
         print(f'{[player.name for player in self.players if player.team != 1]} appeared!')
+        print()
         for player in self.players:
             self.add_into_queue(player=player, game_time=0)
 
@@ -269,10 +270,20 @@ class Battle:
             acting_player, current_game_time = self.get_from_queue()
             if acting_player.is_alive():
                 if acting_player.team == 1:
+                    print(f'{acting_player.name}\'s turn')
+                    print('what will you do?')
+                    print('[f]ight, [i]tem, [s]tats')
                     acting_player.move_input()
+                    print()
+                    print('Who do you attack?')
+                    for player in self.players:
+                        if not player.is_ally(acting_player) and player.is_alive():
+                            print(player.name)
                     acting_player.act(self.players)
+                    print()
                 else:
                     acting_player.act(self.players)
+                    print()
                 for player in self.players:
                     if player.is_alive():
                         print(f'{player.name} LV: {player.level}')
@@ -281,6 +292,7 @@ class Battle:
                     self.add_into_queue(acting_player, current_game_time)
             else:
                 print(f'{acting_player.name} is dead')
+        print()
 
         if self.victory():
             print('You win!')
@@ -307,3 +319,4 @@ if __name__ == '__main__':
     print(f'You found a {potion.name}')
     print(f'{aqua.name} joined!')
     battle.run()
+    time.sleep(5)
