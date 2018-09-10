@@ -3,6 +3,15 @@ from queue import PriorityQueue
 from typing import List, Tuple
 import random
 
+inventory = ['potion']
+
+class Item:
+    def __init__(self,
+                 name: str,
+                 hp_restore: int):
+        self.name = name
+        self.hp_restore = hp_restore
+
 
 class Character:
     """All the methods a character in the game can perform"""
@@ -64,15 +73,6 @@ class Character:
             players[targeted_index] = damaged_player
         return players
 
-    def view_stats(self, players: List) -> List['Character']:
-        for player in self.players:
-            if character.is_alive() and character.team == 1:
-                print(f'{player.name} LV: {player.level}')
-                print(f'HP: {player.hp}/{player.max_hp}')
-                print(f'Attack: {player.attack}')
-                print(f'Speed: {player.speed}')
-            return players
-
 
 class Ally(Character):
     # subclass of character
@@ -100,6 +100,16 @@ class Ally(Character):
 
         return players
 
+    def move_input(self):
+        move = None
+        while move is None:
+            m_input = input('>')
+            move = m_input
+            if move == 'fight':
+                pass
+            elif move == 'item':
+                print(inventory)
+            return move
 
 class Enemy(Character):
     # another subclass of character
@@ -117,6 +127,8 @@ class Enemy(Character):
             return players
         else:
             return players
+
+
 
 
 @dataclass(order=True)
@@ -189,14 +201,10 @@ class Battle:
 
         while not self.is_over():
             acting_player, current_game_time = self.get_from_queue()
-            actions = {'fight': acting_player.act(self.players), 'stats': acting_player.view_stats(self.players)}
             if acting_player.is_alive():
                 if acting_player.team == 1:
-                    action = None
-                    while action is None:
-                        player_input = input('>')
-                        action = actions.get(player_input)
-                        print(action)
+                    acting_player.move_input()
+                    acting_player.act(self.players)
                 else:
                     acting_player.act(self.players)
                 for player in self.players:
@@ -225,6 +233,7 @@ if __name__ == '__main__':
     krillin = Enemy('Krillin', 5, 5, 2, 2)
     yamcha = Enemy('Yamcha', 6, 6, 3, 1)
     anime_male = Enemy('Anime Male', 5, 5, 2, 2)
+    potion = Item('potion', 5)
     battle = Battle(players=[player1, aqua, krillin, yamcha])
     battle1 = Battle(players=[player1, anime_male])
     battle1.run()
