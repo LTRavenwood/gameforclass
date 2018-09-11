@@ -5,7 +5,7 @@ import random
 import time
 
 
-class Item:
+class Potion:
     def __init__(self,
                  name: str,
                  hp_restore: int):
@@ -70,8 +70,8 @@ class Character:
     def act(self, players: List) -> List:
         """how one player acts upon another, eg. an attack"""
         all_enemy_locations = self.get_all_enemies(players)
-        if all_enemy_locations:
-            if self.is_alive:
+        if self.is_alive:
+            if all_enemy_locations:
                 targeted_index = all_enemy_locations[0]
                 targeted_player = players[targeted_index]
                 damaged_player = self.deal_damage(targeted_player)
@@ -123,18 +123,14 @@ class Ally(Character):
     def move_input(self):
         move = None
         while move is None:
-            m_input = input('>')
-            move = m_input
+            move = input('>')
             if move == 'f':
-                pass
+                break
             elif move == 'i':
                 self.use_item()
             elif move == 's':
                 self.get_stats()
-                self.move_input()
-            else:
-                self.move_input()
-            return move
+        return move
 
     def use_item(self):
         if potion.name in inventory:
@@ -143,7 +139,10 @@ class Ally(Character):
             item_input = input('>')
             if item_input == 'y':
                 if self.hp < self.max_hp:
-                    self.hp += potion.hp_restore
+                    for i in range(0, potion.hp_restore + 1):
+                        self.hp += 1
+                        if self.hp == self.max_hp:
+                            break
                     inventory.remove(potion.name)
                 else:
                     print('It won\'t help')
@@ -308,10 +307,10 @@ if __name__ == '__main__':
         name = input('>')
     player1 = Ally(name=name, hp=5, max_hp=5, attack=3, speed=2)
     aqua = Ally(name='Aqua', hp=7, max_hp=7, attack=4, speed=3)
-    krillin = Enemy(name='Krillin', hp=5, max_hp=5, attack=2, speed=2)
-    yamcha = Enemy(name='Yamcha', hp=6, max_hp=6, attack=3, speed=1)
+    krillin = Enemy(name='Krillin', hp=7, max_hp=7, attack=2, speed=2)
+    yamcha = Enemy(name='Yamcha', hp=7, max_hp=7, attack=3, speed=1)
     anime_male = Enemy(name='Anime Male', hp=5, max_hp=5, attack=2, speed=2)
-    potion = Item(name='potion', hp_restore=5)
+    potion = Potion(name='potion', hp_restore=5)
     battle = Battle(players=[player1, aqua, krillin, yamcha])
     battle1 = Battle(players=[player1, anime_male])
     battle1.run()
