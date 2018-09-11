@@ -2,6 +2,18 @@ from dataclasses import dataclass, field
 from queue import PriorityQueue
 from typing import List, Tuple
 import random
+import time
+
+
+class Item:
+    def __init__(self,
+                 name: str,
+                 hp_restore: int):
+        self.name = name
+        self.hp_restore = hp_restore
+
+
+inventory = []
 
 
 class Character:
@@ -9,21 +21,22 @@ class Character:
     def __init__(self,
                  name: str,
                  hp: int,
+                 max_hp: int,
                  attack: int,
                  speed: int,
                  team: int,
                  level: int,
-                 exp: int,
-                 target_exp: int):
+                 exp: int,  # The exp value of the player
+                 target_exp: int):  # The target exp value required for the player to level up
         self.name = name
         self.hp = hp
+        self.max_hp = max_hp
         self.attack = attack
         self.speed = speed
         self.team = team
         self.level = level
         self.exp = exp
         self.target_exp = target_exp
-
 
     def is_alive(self) -> bool:
         """Returns true if the player if they are alive"""
@@ -41,56 +54,136 @@ class Character:
         return other_player
 
     def get_all_enemies(self, players: List) -> List[int]:
+        """returns the location of all enemy players in a list"""
         return [
             index for index, player in enumerate(players)
             if not self.is_ally(player) and player.is_alive()
         ]
 
+    def get_all_allies(self, players: List) -> List[int]:
+        """returns the locations of all ally players in a list"""
+        return[
+            index for index, player in enumerate(players)
+            if self.is_ally(player1) and self.is_alive()
+        ]
+
     def act(self, players: List) -> List:
+        """how one player acts upon another, eg. an attack"""
         all_enemy_locations = self.get_all_enemies(players)
         if all_enemy_locations:
             if self.is_alive:
-                print(f'{self.name}\'s turn!')
-            targeted_index = all_enemy_locations[0]
-            targeted_player = players[targeted_index]
-            damaged_player = self.deal_damage(targeted_player)
-            players[targeted_index] = damaged_player
+                targeted_index = all_enemy_locations[0]
+                targeted_player = players[targeted_index]
+                damaged_player = self.deal_damage(targeted_player)
+                players[targeted_index] = damaged_player
         return players
 
 
 class Ally(Character):
     # subclass of character
     """This is a subclass of characters specific to team 1"""
-    def __init__(self, name: str, hp: int, attack: int, speed: int):
-        super().__init__(name, hp, attack, speed, team=1, level=1, exp=0, target_exp=200)
+    def __init__(self,
+                 name: str,
+                 hp: int,
+                 max_hp: int,
+                 attack: int,
+                 speed: int):
+        super().__init__(name,
+                         hp,
+                         max_hp,
+                         attack,
+                         speed,
+                         team=1,
+                         level=1,
+                         exp=0,
+                         target_exp=200)
 
     def act(self, players):
         """the act method specific to team 1"""
-        # I want to input the name of the enemy to attack
+
         all_enemy_locations = self.get_all_enemies(players)
         enemies = {character.name:
                    character for character in players if character.team != 1}
         if all_enemy_locations:
             if self.is_alive:
-                print(f'{self.name}\'s turn!')
-                print('Who do you attack?')
-                for player in players:
-                    if not player.is_ally(self) and player.is_alive():
-                        print(player.name)
-                targeted_enemy = None
-                while targeted_enemy is None:
-                    user_input = input('>')
-                    targeted_enemy = enemies.get(user_input)
-                damaged_player = self.deal_damage(targeted_enemy)
+                if all_enemy_locations.count(1):
+                    targeted_index = all_enemy_locations[0]
+                    targeted_player = players[targeted_index]
+                    damaged_player = self.deal_damage(targeted_player)
+                    players[targeted_index] = damaged_player
+                else:
+                    targeted_enemy = None
+                    while targeted_enemy is None:
+                        user_input = input('>')
+                        targeted_enemy = enemies.get(user_input)
+                    damaged_player = self.deal_damage(targeted_enemy)
 
         return players
+
+    def move_input(self):
+        move = None
+        while move is None:
+            m_input = input('>')
+            move = m_input
+            if move == 'f':
+                pass
+            elif move == 'i':
+                self.use_item()
+            elif move == 's':
+                self.get_stats()
+                self.move_input()
+            else:
+                self.move_input()
+            return move
+
+    def use_item(self):
+        if potion.name in inventory:
+            print(f'would you like to use {potion.name}?')
+            print('[y]es or [n] no')
+            item_input = input('>')
+            if item_input == 'y':
+                if self.hp < self.max_hp:
+                    self.hp += potion.hp_restore
+                    inventory.remove(potion.name)
+                else:
+                    print('It won\'t help')
+                    self.move_input()
+            if item_input == 'n':
+                self.move_input()
+        else:
+            print('Your inventory is empty')
+            self.move_input()
+
+    def get_stats(self):
+        """prints out the player's important stats"""
+        if self.is_alive():
+            stats = {
+                'name': self.name,
+                'hp/max hp': f'{self.hp}/{self.max_hp}',
+                'attack': self.attack,
+                'speed': self.speed
+            }
+            print(stats)
 
 
 class Enemy(Character):
     # another subclass of character
     """this is a subclass of characters specific to team 2"""
-    def __init__(self, name: str, hp: int, attack: int, speed: int):
-        super().__init__(name, hp, attack, speed, team=2, level=1, exp=0, target_exp=200)
+    def __init__(self,
+                 name: str,
+                 hp: int,
+                 max_hp: int,
+                 attack: int,
+                 speed: int):
+        super().__init__(name,
+                         hp,
+                         max_hp,
+                         attack,
+                         speed,
+                         team=2,
+                         level=1,
+                         exp=0,
+                         target_exp=200)
 
     def act(self, players):
         all_enemy_locations = self.get_all_enemies(players)
@@ -156,28 +249,50 @@ class Battle:
                 if player.exp >= player.target_exp:
                     print(f'{player.name} leveled up!')
                     player.level += 1
+                    player.max_hp += 2
+                    player.hp = player.max_hp
+                    player.attack += 1
+                    player.speed += 1
                     player.target_exp *= 2
                     player.exp = 0
+                    print(f'HP: {player.hp}/{player.max_hp}')
+                    print(f'attack: {player.attack}')
+                    print(f'speed: {player.speed}')
 
     def run(self):
         """Makes the battle loop while it's not over"""
         print(f'{[player.name for player in self.players if player.team != 1]} appeared!')
+        print()
         for player in self.players:
             self.add_into_queue(player=player, game_time=0)
 
         while not self.is_over():
             acting_player, current_game_time = self.get_from_queue()
             if acting_player.is_alive():
-                updated_players = acting_player.act(self.players)
-                self.players = updated_players
+                if acting_player.team == 1:
+                    print(f'{acting_player.name}\'s turn')
+                    print('what will you do?')
+                    print('[f]ight, [i]tem, [s]tats')
+                    acting_player.move_input()
+                    print()
+                    print('Who do you attack?')
+                    for player in self.players:
+                        if not player.is_ally(acting_player) and player.is_alive():
+                            print(player.name)
+                    acting_player.act(self.players)
+                    print()
+                else:
+                    acting_player.act(self.players)
+                    print()
                 for player in self.players:
                     if player.is_alive():
                         print(f'{player.name} LV: {player.level}')
-                        print(f'HP: {player.hp}')
+                        print(f'HP: {player.hp}/{player.max_hp}')
                 if acting_player.is_alive and acting_player.get_all_enemies(self.players):
                     self.add_into_queue(acting_player, current_game_time)
             else:
                 print(f'{acting_player.name} is dead')
+        print()
 
         if self.victory():
             print('You win!')
@@ -191,10 +306,17 @@ if __name__ == '__main__':
     name = ''
     while name == '':
         name = input('>')
-    player1 = Ally(name, 5, 3, 2)
-    aqua = Ally('Aqua', 7, 4, 3)
-    krillin = Enemy('Krillin', 5, 2, 2)
-    yamcha = Enemy('Yamcha', 6, 3, 1)
-
+    player1 = Ally(name=name, hp=5, max_hp=5, attack=3, speed=2)
+    aqua = Ally(name='Aqua', hp=7, max_hp=7, attack=4, speed=3)
+    krillin = Enemy(name='Krillin', hp=5, max_hp=5, attack=2, speed=2)
+    yamcha = Enemy(name='Yamcha', hp=6, max_hp=6, attack=3, speed=1)
+    anime_male = Enemy(name='Anime Male', hp=5, max_hp=5, attack=2, speed=2)
+    potion = Item(name='potion', hp_restore=5)
     battle = Battle(players=[player1, aqua, krillin, yamcha])
+    battle1 = Battle(players=[player1, anime_male])
+    battle1.run()
+    inventory.append(potion.name)
+    print(f'You found a {potion.name}')
+    print(f'{aqua.name} joined!')
     battle.run()
+    time.sleep(5)

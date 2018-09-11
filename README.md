@@ -3,8 +3,8 @@ I am making a smaller battle script as a project for class
 
 ## Development Notes:
 
-The end goal for this script is to make 
-a battle scene with a character and an enemy
+The end goal for this script is to make  multiple
+battle scenes with several different characters and enemies
 The main battle should include an attack
 method and a block method.
 
