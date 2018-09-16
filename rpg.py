@@ -60,6 +60,18 @@ class Character:
         """Deals damage if the other player is alive"""
         if other_player.is_alive:
             other_player.hp -= self.attack
+            print(f'{self.name} attacked {other_player.name} for {self.attack} damage!')
+        return other_player
+
+    def deal_damage2(self, other_player):
+        """Deals a bit more damage and has a chance to burn the target"""
+        if other_player.is_alive():
+            self.attack *= 2
+            other_player.hp -= self.attack
+            burn_chance = random.randint(1, 100)
+            if burn_chance < 11:
+                other_player.is_burned = True
+                print(f'{self.name} attacked {other_player.name} for {self.attack} damage!')
         return other_player
 
     def get_all_enemies(self, players: List) -> List[int]:
@@ -76,8 +88,17 @@ class Character:
             if all_enemy_locations:
                 targeted_index = all_enemy_locations[0]
                 targeted_player = players[targeted_index]
-                damaged_player = self.deal_damage(targeted_player)
-                players[targeted_index] = damaged_player
+                damage_input = None
+                while damage_input is None:
+                    damage_input = input('>')
+                    if damage_input == 1:
+                        damaged_player = self.deal_damage(targeted_player)
+                        players[targeted_index] = damaged_player
+                    elif damage_input == 2:
+                        damaged_player = self.deal_damage2(targeted_player)
+                        players[targeted_index] = damaged_player
+                    else:
+                        print('please enter a move option.')
 
         return players
 
@@ -114,8 +135,18 @@ class Ally(Character):
                 if len(all_enemy_locations) == 1:  # if there is only one enemy in the battle:
                     targeted_index = all_enemy_locations[0]
                     targeted_player = players[targeted_index]
-                    damaged_player = self.deal_damage(targeted_player)
-                    players[targeted_index] = damaged_player
+                    print('What move will you use?')
+                    damage_input = input('>')
+                    print(damage_input)
+                    if damage_input == 1:
+                        damaged_player = self.deal_damage(targeted_player)
+                        players[targeted_index] = damaged_player
+                    elif damage_input == 2:
+                        damaged_player = self.deal_damage2(targeted_player)
+                        players[targeted_index] = damaged_player
+                    else:
+                        damage_input = input('>')
+                        print(damage_input)
                 else:  # if there is more than one enemy in the battle:
                     print('Who do you attack?')
                     for player in players:
@@ -125,11 +156,23 @@ class Ally(Character):
                     while targeted_enemy is None:
                         user_input = input('>')
                         targeted_enemy = enemies.get(user_input)
-                    damaged_player = self.deal_damage(targeted_enemy)
+                        damage_input = input('>')
+                        print(damage_input)
+                        if damage_input == 1:
+                            damaged_player = self.deal_damage(targeted_enemy)
+                            targeted_enemy = damaged_player
+                        elif damage_input == 2:
+                            damaged_player = self.deal_damage2(targeted_enemy)
+                            targeted_enemy = damaged_player
+                        else:
+                            damage_input = input('>')
+                            print(damage_input)
 
         return players
 
     def move_input(self, players: List[Character]):
+        print('What will you do?')
+        print('[f]ight, [i]tem, [s]tats')
         move = None
         while move is None:
             move_input = input('>')
@@ -150,6 +193,7 @@ class Ally(Character):
             item_use = None
             while item_use is None:
                 item_input = input('>')
+                print(item_input)
                 if item_input == 'y':
                     if self.hp < self.max_hp:
                         self.hp = min(self.hp + potion.hp_restore, self.max_hp)
@@ -197,10 +241,14 @@ class Enemy(Character):
     def act(self, players):
         all_enemy_locations = self.get_all_enemies(players)
         if all_enemy_locations:
-            targeted_index = random.choice(all_enemy_locations)
-            targeted_player = players[targeted_index]
-            damaged_player = self.deal_damage(targeted_player)
-            players[targeted_index] = damaged_player
+            damage_input = random.randint(1, 2)
+            targeted_player = random.choice(all_enemy_locations)
+            if damage_input == 1:
+                damaged_player = self.deal_damage(targeted_player)
+                players[targeted_index] = damaged_player
+            elif damage_input == 2:
+                damaged_player = self.deal_damage2(targeted_player)
+                players[targeted_index] = damaged_player
 
         return players
 
@@ -283,16 +331,11 @@ class Battle:
             if acting_player.is_alive():
                 if acting_player.team == 1:
                     print(f'{acting_player.name}\'s turn')
-                    print('what will you do?')
-                    print('[f]ight, [i]tem, [s]tats')
+                    print()
                     acting_player.move_input(self.players)
-
-                    print()
                     acting_player.act(self.players)
-                    print()
                 else:
                     acting_player.act(self.players)
-                    print()
                 if acting_player.is_burned is True:
                     acting_player.hp -= 1
                     print(f'{acting_player.name} was burned for 1 damage!')
