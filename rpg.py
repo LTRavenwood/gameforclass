@@ -39,6 +39,7 @@ class Character:
         self.level_exp = level_exp
         self.team = team
         self.level = level
+        self.is_burned = False
         """:param max_hp: hp of an unharmed player
         :param level: level of the player, 1-100 eventually
         :param exp: value of the current exp a player has
@@ -48,17 +49,13 @@ class Character:
         """Returns true if the player if they are alive"""
         return self.hp > 0
 
-    def is_burned(self) -> bool:
-        """check to see if the player has been burned"""
-        return self.is_burned is True
-
     def is_ally(self, other_player) -> bool:
         """returns true if the player is an ally"""
         return other_player.team == self.team
 
     def deal_damage(self, other_player):
         """Deals damage if the other player is alive"""
-        if other_player.is_alive:
+        if other_player.is_alive():
             other_player.hp -= self.attack
             print(f'{self.name} attacked {other_player.name} for {self.attack} damage!')
         return other_player
@@ -88,17 +85,19 @@ class Character:
             if all_enemy_locations:
                 targeted_index = all_enemy_locations[0]
                 targeted_player = players[targeted_index]
-                damage_input = None
-                while damage_input is None:
+                print('What move will you use?')
+                damage_input = input('>')
+                print(damage_input)
+                if damage_input == 1:
+                    damaged_player = self.deal_damage(targeted_player)
+                    players[targeted_index] = damaged_player
+                elif damage_input == 2:
+                    damaged_player = self.deal_damage2(targeted_player)
+                    players[targeted_index] = damaged_player
+                else:
+                    print('please enter a move option.')
                     damage_input = input('>')
-                    if damage_input == 1:
-                        damaged_player = self.deal_damage(targeted_player)
-                        players[targeted_index] = damaged_player
-                    elif damage_input == 2:
-                        damaged_player = self.deal_damage2(targeted_player)
-                        players[targeted_index] = damaged_player
-                    else:
-                        print('please enter a move option.')
+                    print(damage_input)
 
         return players
 
@@ -145,6 +144,7 @@ class Ally(Character):
                         damaged_player = self.deal_damage2(targeted_player)
                         players[targeted_index] = damaged_player
                     else:
+                        print('What move will you use?')
                         damage_input = input('>')
                         print(damage_input)
                 else:  # if there is more than one enemy in the battle:
@@ -156,6 +156,7 @@ class Ally(Character):
                     while targeted_enemy is None:
                         user_input = input('>')
                         targeted_enemy = enemies.get(user_input)
+                        print('What move will you use?')
                         damage_input = input('>')
                         print(damage_input)
                         if damage_input == 1:
@@ -170,41 +171,42 @@ class Ally(Character):
 
         return players
 
-    def move_input(self, players: List[Character]):
+    def move_input(self):
         print('What will you do?')
         print('[f]ight, [i]tem, [s]tats')
-        move = None
-        while move is None:
-            move_input = input('>')
-            move = move_input
-            if move == 'f':
-                break
-            if move == 'i':
-                self.use_item()
-            if move == 's':
-                self.get_stats()
-            else:
-                return self.move_input(players)
+        move_input = input('>')
+        print(move_input)
+        move = move_input
+        print(move)
+        if move == 'f':
+            pass
+        elif move == 'i':
+            self.use_item()
+        elif move == 's':
+            self.get_stats()
+        else:
+            print('Please input a move.')
+            return move_input
 
     def use_item(self):
-        if potion in inventory:
+        if potion.name in inventory:
             print(f'would you like to use {potion.name}?')
             print('[y]es or [n] no')
-            item_use = None
-            while item_use is None:
-                item_input = input('>')
-                print(item_input)
-                if item_input == 'y':
-                    if self.hp < self.max_hp:
-                        self.hp = min(self.hp + potion.hp_restore, self.max_hp)
-                        inventory.remove(potion)
-                    else:
-                        print('It won\'t help')
-                        break
-                if item_input == 'n':
-                    break
-        else:
-            print('Your inventory is empty')
+            item_input = input('>')
+            print(item_input)
+            if item_input == 'y':
+                if self.hp < self.max_hp:
+                    self.hp = min(self.hp + potion.hp_restore, self.max_hp)
+                    inventory.remove(potion)
+                else:
+                    print('It won\'t help')
+            if item_input == 'n':
+                pass
+            elif item_input != 'y' and item_input != 'n':
+                print('please enter y or n')
+                return item_input
+            else:
+                print('Your inventory is empty')
 
     def get_stats(self):
         """prints out the player's important stats"""
@@ -309,11 +311,7 @@ class Battle:
                     player.hp = player.max_hp
                     player.attack += 1
                     player.speed += 1
-                    if player.leveling_rate == 1:
-                        player.level_exp *= 2
-                    elif player.leveling_rate == 2:
-                        player.level_exp *= 4
-
+                    player.level_exp *= (player.leveling_rate * 2)
                     player.exp = 0
                     print(f'HP: {player.hp}/{player.max_hp}')
                     print(f'New attack: {player.attack}')
@@ -332,7 +330,8 @@ class Battle:
                 if acting_player.team == 1:
                     print(f'{acting_player.name}\'s turn')
                     print()
-                    acting_player.move_input(self.players)
+                    acting_player.move_input()
+                    print(acting_player.move_input)
                     acting_player.act(self.players)
                 else:
                     acting_player.act(self.players)
