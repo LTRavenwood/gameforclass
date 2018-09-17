@@ -75,31 +75,8 @@ class Character:
         """returns the location of all enemy players in a list"""
         return [
             index for index, player in enumerate(players)
-            if not self.is_ally(player) and player.is_alive()
+            if not player.is_ally(self) and player.is_alive()
         ]
-
-    def act(self, players: List) -> List:
-        """how one player acts upon another, eg. an attack"""
-        all_enemy_locations = self.get_all_enemies(players)
-        if self.is_alive:
-            if all_enemy_locations:
-                targeted_index = all_enemy_locations[0]
-                targeted_player = players[targeted_index]
-                print('What move will you use?')
-                damage_input = input('>')
-                print(damage_input)
-                if damage_input == 1:
-                    damaged_player = self.deal_damage(targeted_player)
-                    players[targeted_index] = damaged_player
-                elif damage_input == 2:
-                    damaged_player = self.deal_damage2(targeted_player)
-                    players[targeted_index] = damaged_player
-                else:
-                    print('please enter a move option.')
-                    damage_input = input('>')
-                    print(damage_input)
-
-        return players
 
 
 class Ally(Character):
@@ -131,23 +108,23 @@ class Ally(Character):
                    character for character in players if character.team != 1}
         if self.is_alive:
             if all_enemy_locations:
+                print(all_enemy_locations)
+                print(enemies)
                 if len(all_enemy_locations) == 1:  # if there is only one enemy in the battle:
+                    print('What move will you use 1?')
                     targeted_index = all_enemy_locations[0]
                     targeted_player = players[targeted_index]
-                    print('What move will you use?')
                     damage_input = input('>')
-                    print(damage_input)
-                    if damage_input == 1:
-                        damaged_player = self.deal_damage(targeted_player)
-                        players[targeted_index] = damaged_player
-                    elif damage_input == 2:
-                        damaged_player = self.deal_damage2(targeted_player)
-                        players[targeted_index] = damaged_player
-                    else:
-                        print('What move will you use?')
-                        damage_input = input('>')
-                        print(damage_input)
+                    if damage_input == '1':
+                        self.deal_damage(targeted_player)
+                        print(f'{self.name} attacked {targeted_player.name} for {self.attack} damage!')
+                    elif damage_input == '2':
+                        self.deal_damage2(targeted_player)
+                        print(f'{self.name} attacked {targeted_player.name} for {self.attack} damage!')
+
                 else:  # if there is more than one enemy in the battle:
+                    print('What move will you use 1?')
+                    damage_input = input('>')
                     print('Who do you attack?')
                     for player in players:
                         if player.is_alive() and not player.is_ally(self):
@@ -156,37 +133,32 @@ class Ally(Character):
                     while targeted_enemy is None:
                         user_input = input('>')
                         targeted_enemy = enemies.get(user_input)
-                        print('What move will you use?')
-                        damage_input = input('>')
-                        print(damage_input)
-                        if damage_input == 1:
-                            damaged_player = self.deal_damage(targeted_enemy)
-                            targeted_enemy = damaged_player
-                        elif damage_input == 2:
-                            damaged_player = self.deal_damage2(targeted_enemy)
-                            targeted_enemy = damaged_player
-                        else:
-                            damage_input = input('>')
-                            print(damage_input)
+                        if damage_input == '1':
+                            self.deal_damage(targeted_enemy)
+                            print(f'{self.name} attacked {targeted_enemy.name} for {self.attack} damage!')
+                        elif damage_input == '2':
+                            self.deal_damage2(targeted_enemy)
+                            print(f'{self.name} attacked {targeted_enemy.name} for {self.attack} damage!')
 
         return players
 
     def move_input(self):
         print('What will you do?')
         print('[f]ight, [i]tem, [s]tats')
-        move_input = input('>')
-        print(move_input)
-        move = move_input
-        print(move)
-        if move == 'f':
-            pass
-        elif move == 'i':
-            self.use_item()
-        elif move == 's':
-            self.get_stats()
-        else:
-            print('Please input a move.')
-            return move_input
+        move = None
+        while move is None:
+            move_input = input('>')
+            move = move_input
+            print(move)
+            if move == 'f':
+                pass
+            elif move == 'i':
+                self.use_item()
+            elif move == 's':
+                self.get_stats()
+            else:
+                print('Please input a move.')
+                move = None
 
     def use_item(self):
         if potion.name in inventory:
@@ -242,13 +214,18 @@ class Enemy(Character):
 
     def act(self, players):
         all_enemy_locations = self.get_all_enemies(players)
+        allies = {character.name: character for character in players if character.team != 2}
+        print(allies)
         if all_enemy_locations:
-            damage_input = random.randint(1, 2)
+            print(all_enemy_locations)
+            print('There is a target')
             targeted_player = random.choice(all_enemy_locations)
-            if damage_input == 1:
+            enemy_damage = random.randint(1, 2)
+            print(enemy_damage)
+            if enemy_damage == 1:
                 damaged_player = self.deal_damage(targeted_player)
                 players[targeted_index] = damaged_player
-            elif damage_input == 2:
+            elif enemy_damage == 2:
                 damaged_player = self.deal_damage2(targeted_player)
                 players[targeted_index] = damaged_player
 
@@ -323,6 +300,7 @@ class Battle:
         print()
         for player in self.players:
             self.add_into_queue(player=player, game_time=0)
+        print('All players have been added to queue')
 
         while not self.is_over():
             acting_player, current_game_time = self.get_from_queue()
@@ -331,7 +309,6 @@ class Battle:
                     print(f'{acting_player.name}\'s turn')
                     print()
                     acting_player.move_input()
-                    print(acting_player.move_input)
                     acting_player.act(self.players)
                 else:
                     acting_player.act(self.players)
