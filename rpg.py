@@ -6,6 +6,8 @@ import time
 
 
 class Item:
+    """This will NOT just be potions,
+    there will be statuses to worry about and cure with items"""
     def __init__(self,
                  name: str,
                  hp_restore: int):
@@ -80,7 +82,6 @@ class Character:
 
 
 class Ally(Character):
-    # subclass of character
     """This is a subclass of characters specific to team 1"""
     def __init__(self,
                  name: str,
@@ -101,7 +102,7 @@ class Ally(Character):
                          level=1)
 
     def act(self, players):
-        """the act method specific to team 1"""
+        """the act method specific to team 1 or the allies"""
 
         all_enemy_locations = self.get_all_enemies(players)
         enemies = {character.name:
@@ -143,6 +144,8 @@ class Ally(Character):
         return players
 
     def move_input(self):
+        """an input at the beginning of the ally turn
+        which will ask to either fight, view inventory, or view stats"""
         print('What will you do?')
         print('[f]ight, [i]tem, [s]tats')
         move = None
@@ -161,6 +164,7 @@ class Ally(Character):
                 move = None
 
     def use_item(self):
+        """How the player can use an item to recover hp"""
         if potion.name in inventory:
             print(f'would you like to use {potion.name}?')
             print('[y]es or [n] no')
@@ -170,7 +174,7 @@ class Ally(Character):
                 if self.hp < self.max_hp:
                     self.hp = min(self.hp + potion.hp_restore, self.max_hp)
                     inventory.remove(potion)
-                else:
+                else:  # If the player's hp is already full, they shouldn't be able to use the potion
                     print('It won\'t help')
             if item_input == 'n':
                 pass
@@ -213,15 +217,13 @@ class Enemy(Character):
                          level=1)
 
     def act(self, players):
+        """The act method specific to the enemy characters"""
         all_enemy_locations = self.get_all_enemies(players)
-        allies = {character.name: character for character in players if character.team != 2}
-        print(allies)
         if all_enemy_locations:
             print(all_enemy_locations)
             print('There is a target')
             targeted_player = random.choice(all_enemy_locations)
             enemy_damage = random.randint(1, 2)
-            print(enemy_damage)
             if enemy_damage == 1:
                 damaged_player = self.deal_damage(targeted_player)
                 players[targeted_index] = damaged_player
@@ -276,6 +278,9 @@ class Battle:
                 return defeat
 
     def level_up(self):
+        """Method to check the player's exp
+        add exp when a fight is won
+        and level up when the exp reaches it's target value"""
         exp_gain = 200
         for player in self.players:
             if player.is_alive():
@@ -297,6 +302,8 @@ class Battle:
     def run(self):
         """Makes the battle loop while it's not over"""
         print(f'{[player.name for player in self.players if player.team != 1]} appeared!')
+        # Empty print statements are to separate texts in the console
+        # To improve readability during the program's running
         print()
         for player in self.players:
             self.add_into_queue(player=player, game_time=0)
