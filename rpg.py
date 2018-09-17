@@ -5,6 +5,16 @@ import random
 import time
 
 
+def blocking_input(acceptable_responses: [str]) -> str:
+    """calls input('>') until an appropriate input is selected
+    :param acceptable_responses: the inputs that will get a go-ahead"""
+    while True:
+        output = input('>')
+        if output in acceptable_responses:
+            break
+    return output
+
+
 class Item:
     """This will NOT just be potions,
     there will be statuses to worry about and cure with items"""
@@ -22,10 +32,10 @@ class Character:
     """All the methods a character in the game can perform"""
     def __init__(self,
                  name: str,
-                 hp: int,
-                 max_hp: int,
-                 attack: int,
-                 speed: int,
+                 hp: float,
+                 max_hp: float,
+                 attack: float,
+                 speed: float,
                  leveling_rate: int,
                  exp: int,
                  level_exp: int,
@@ -55,25 +65,17 @@ class Character:
         """returns true if the player is an ally"""
         return other_player.team == self.team
 
-    def deal_damage(self, other_player):
-        """Deals damage if the other player is alive"""
+    def deal_damage(self, other_player: 'Character', multiplier: float, burn_chance: int):
+        """The base method for dealing damage to an enemy player
+        :param other_player: target of damage
+        :param multiplier: the multiplier of the damage dealt
+        :param burn_chance: target's chance of being burned in the attack"""
         if other_player.is_alive():
-            other_player.hp -= self.attack
-            print(f'{self.name} attacked {other_player.name} for {self.attack} damage!')
+            other_player.hp -= (self.attack * multiplier)
+            other_player.is_burned = other_player.is_burned or (burn_chance > random.random())
         return other_player
 
-    def deal_damage2(self, other_player):
-        """Deals a bit more damage and has a chance to burn the target"""
-        if other_player.is_alive():
-            self.attack *= 2
-            other_player.hp -= self.attack
-            burn_chance = random.randint(1, 100)
-            if burn_chance < 11:
-                other_player.is_burned = True
-                print(f'{self.name} attacked {other_player.name} for {self.attack} damage!')
-        return other_player
-
-    def get_all_enemies(self, players: List) -> List[int]:
+    def get_all_enemies(self, players: List['Character']) -> List[int]:
         """returns the location of all enemy players in a list"""
         return [
             index for index, player in enumerate(players)
@@ -100,8 +102,10 @@ class Ally(Character):
                          level_exp=200,
                          team=1,
                          level=1)
+        """:param leveling_rate: a multiplier of the level exp every time
+                    """
 
-    def act(self, players):
+    def act(self, players: List['Character']):
         """the act method specific to team 1 or the allies"""
 
         all_enemy_locations = self.get_all_enemies(players)
@@ -109,23 +113,19 @@ class Ally(Character):
                    character for character in players if character.team != 1}
         if self.is_alive:
             if all_enemy_locations:
-                print(all_enemy_locations)
-                print(enemies)
                 if len(all_enemy_locations) == 1:  # if there is only one enemy in the battle:
-                    print('What move will you use 1?')
                     targeted_index = all_enemy_locations[0]
                     targeted_player = players[targeted_index]
-                    damage_input = input('>')
-                    if damage_input == '1':
-                        self.deal_damage(targeted_player)
-                        print(f'{self.name} attacked {targeted_player.name} for {self.attack} damage!')
-                    elif damage_input == '2':
-                        self.deal_damage2(targeted_player)
-                        print(f'{self.name} attacked {targeted_player.name} for {self.attack} damage!')
-
+                    print('Normal attack: 1')
+                    print('Special attack: 2')
+                    multiplier_input = blocking_input(['1', '2'])
+                    if multiplier_input == '1':
+                        self.deal_damage(targeted_player, multiplier=1.0, burn_chance=0)
+                    elif multiplier_input == '2':
+                        self.deal_damage(targeted_player, multiplier=1.3, burn_chance=10)
+                    else:
+                        print('Entry invalid')
                 else:  # if there is more than one enemy in the battle:
-                    print('What move will you use 1?')
-                    damage_input = input('>')
                     print('Who do you attack?')
                     for player in players:
                         if player.is_alive() and not player.is_ally(self):
@@ -134,12 +134,13 @@ class Ally(Character):
                     while targeted_enemy is None:
                         user_input = input('>')
                         targeted_enemy = enemies.get(user_input)
-                        if damage_input == '1':
-                            self.deal_damage(targeted_enemy)
-                            print(f'{self.name} attacked {targeted_enemy.name} for {self.attack} damage!')
-                        elif damage_input == '2':
-                            self.deal_damage2(targeted_enemy)
-                            print(f'{self.name} attacked {targeted_enemy.name} for {self.attack} damage!')
+                        print('Normal attack: 1')
+                        print('Special attack: 2')
+                        multiplier_input = input('>')
+                        if multiplier_input == '1':
+                            self.deal_damage(other_player=targeted_enemy, multiplier=1.0, burn_chance=0)
+                        elif multiplier_input == '2':
+                            self.deal_damage(other_player=targeted_enemy, multiplier=1.3, burn_chance=10)
 
         return players
 
@@ -216,7 +217,7 @@ class Enemy(Character):
                          team=2,
                          level=1)
 
-    def act(self, players):
+    def act(self, players: List['Character']):
         """The act method specific to the enemy characters"""
         all_enemy_locations = self.get_all_enemies(players)
         if all_enemy_locations:
@@ -225,11 +226,9 @@ class Enemy(Character):
             targeted_player = random.choice(all_enemy_locations)
             enemy_damage = random.randint(1, 2)
             if enemy_damage == 1:
-                damaged_player = self.deal_damage(targeted_player)
-                players[targeted_index] = damaged_player
+                self.deal_damage(other_player=targeted_player, multiplier=1.0, burn_chance=0)
             elif enemy_damage == 2:
-                damaged_player = self.deal_damage2(targeted_player)
-                players[targeted_index] = damaged_player
+                self.deal_damage(other_player=targeted_player, multiplier=1.3, burn_chance=10)
 
         return players
 
