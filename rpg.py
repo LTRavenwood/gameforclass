@@ -20,9 +20,11 @@ class Item:
     there will be statuses to worry about and cure with items"""
     def __init__(self,
                  name: str,
-                 hp_restore: int):
+                 hp_restore: int,
+                 heal_status: bool):
         self.name = name
-        self.hp_restore = hp_restore
+        self.hp_restore = hp_restore,
+        self.heal_status = heal_status
 
 
 inventory = []
@@ -71,16 +73,29 @@ class Character:
         :param multiplier: the multiplier of the damage dealt
         :param burn_chance: target's chance of being burned in the attack"""
         if other_player.is_alive():
-            other_player.hp -= (self.attack * multiplier)
-            other_player.is_burned = other_player.is_burned or (burn_chance > random.random())
+            other_player.hp -= (int(self.attack * multiplier))
+            other_player.is_burned = other_player.is_burned or (burn_chance > random.randint(1, 100))
+            print(f'{self.name} attacked {other_player.name} for {int(self.attack * multiplier)} damage!')
+            if other_player.is_burned:
+                print(f'{other_player.name} Received a burn!')
         return other_player
 
     def get_all_enemies(self, players: List['Character']) -> List[int]:
         """returns the location of all enemy players in a list"""
         return [
             index for index, player in enumerate(players)
-            if not player.is_ally(self) and player.is_alive()
+            if not self.is_ally(player) and player.is_alive()
         ]
+
+    def act(self, players: List):
+        all_enemy_locations = self.get_all_enemies(players)
+        if self.is_alive():
+            if all_enemy_locations:
+                targeted_index = all_enemy_locations[0]
+                targeted_player = players[targeted_index]
+                damaged_player = self.deal_damage(targeted_player, 1.0, 0)
+                players[targeted_index] = damaged_player
+        return players
 
 
 class Ally(Character):
@@ -123,8 +138,6 @@ class Ally(Character):
                         self.deal_damage(targeted_player, multiplier=1.0, burn_chance=0)
                     elif multiplier_input == '2':
                         self.deal_damage(targeted_player, multiplier=1.3, burn_chance=10)
-                    else:
-                        print('Entry invalid')
                 else:  # if there is more than one enemy in the battle:
                     print('Who do you attack?')
                     for player in players:
@@ -134,13 +147,13 @@ class Ally(Character):
                     while targeted_enemy is None:
                         user_input = input('>')
                         targeted_enemy = enemies.get(user_input)
-                        print('Normal attack: 1')
-                        print('Special attack: 2')
-                        multiplier_input = input('>')
-                        if multiplier_input == '1':
-                            self.deal_damage(other_player=targeted_enemy, multiplier=1.0, burn_chance=0)
-                        elif multiplier_input == '2':
-                            self.deal_damage(other_player=targeted_enemy, multiplier=1.3, burn_chance=10)
+                    print('Normal attack: 1')
+                    print('Special attack: 2')
+                    multiplier_input = blocking_input(['1', '2'])
+                    if multiplier_input == '1':
+                        self.deal_damage(other_player=targeted_enemy, multiplier=1.0, burn_chance=0)
+                    elif multiplier_input == '2':
+                        self.deal_damage(other_player=targeted_enemy, multiplier=1.3, burn_chance=10)
 
         return players
 
@@ -149,41 +162,38 @@ class Ally(Character):
         which will ask to either fight, view inventory, or view stats"""
         print('What will you do?')
         print('[f]ight, [i]tem, [s]tats')
-        move = None
-        while move is None:
-            move_input = input('>')
-            move = move_input
-            print(move)
-            if move == 'f':
-                pass
-            elif move == 'i':
-                self.use_item()
-            elif move == 's':
-                self.get_stats()
-            else:
-                print('Please input a move.')
-                move = None
+        move_input = blocking_input(['f', 'i', 's'])
+        if move_input == 'f':
+            pass
+        elif move_input == 'i':
+            self.use_item()
+        elif move_input == 's':
+            self.get_stats()
 
-    def use_item(self):
+    def use_item(self) -> List:
         """How the player can use an item to recover hp"""
-        if potion.name in inventory:
-            print(f'would you like to use {potion.name}?')
-            print('[y]es or [n] no')
-            item_input = input('>')
-            print(item_input)
-            if item_input == 'y':
-                if self.hp < self.max_hp:
-                    self.hp = min(self.hp + potion.hp_restore, self.max_hp)
-                    inventory.remove(potion)
-                else:  # If the player's hp is already full, they shouldn't be able to use the potion
-                    print('It won\'t help')
-            if item_input == 'n':
-                pass
-            elif item_input != 'y' and item_input != 'n':
-                print('please enter y or n')
-                return item_input
-            else:
-                print('Your inventory is empty')
+        if len(inventory) > 0:
+            print(inventory)
+            for item in inventory:
+                print(f'would you like to use {item}?')
+                print('[y]es or [n] no')
+                item_input = blocking_input(['y', 'n'])
+                if item_input == 'y':
+                    if self.hp < self.max_hp:
+                        self.hp = min(self.hp + potion.hp_restore, self.max_hp)
+                        print(f'{self.name}\'s hp was restored')
+                    if self.is_burned is True:
+                        if burn_heal.heal_status is True:
+                            self.is_burned = False
+                            print(f'{self.name}\'s burn was healed')
+                        inventory.remove(item)
+                    else:  # If the player's hp is already full, they shouldn't be able to use the potion
+                        print('It won\'t help')
+                elif item_input == 'n':
+                    pass
+        else:
+            print('Your inventory is empty')
+        return inventory
 
     def get_stats(self):
         """prints out the player's important stats"""
@@ -194,6 +204,8 @@ class Ally(Character):
                 'speed': self.speed
             }
             print(stats)
+            print()
+            return stats
 
 
 class Enemy(Character):
@@ -221,9 +233,8 @@ class Enemy(Character):
         """The act method specific to the enemy characters"""
         all_enemy_locations = self.get_all_enemies(players)
         if all_enemy_locations:
-            print(all_enemy_locations)
-            print('There is a target')
-            targeted_player = random.choice(all_enemy_locations)
+            targeted_index = random.choice(all_enemy_locations)
+            targeted_player = players[targeted_index]
             enemy_damage = random.randint(1, 2)
             if enemy_damage == 1:
                 self.deal_damage(other_player=targeted_player, multiplier=1.0, burn_chance=0)
@@ -288,6 +299,7 @@ class Battle:
                 if player.exp >= player.level_exp:
                     print(f'{player.name} leveled up!')
                     player.level += 1
+                    print(f'{player.name} LV: {player.level}')
                     player.max_hp += 2
                     player.hp = player.max_hp
                     player.attack += 1
@@ -306,7 +318,6 @@ class Battle:
         print()
         for player in self.players:
             self.add_into_queue(player=player, game_time=0)
-        print('All players have been added to queue')
 
         while not self.is_over():
             acting_player, current_game_time = self.get_from_queue()
@@ -317,15 +328,17 @@ class Battle:
                     acting_player.move_input()
                     acting_player.act(self.players)
                 else:
+                    print(f'{acting_player.name}\'s turn')
                     acting_player.act(self.players)
                 if acting_player.is_burned is True:
                     acting_player.hp -= 1
                     print(f'{acting_player.name} was burned for 1 damage!')
-                    print()
+                print()
                 for player in self.players:
                     if player.is_alive():
                         print(f'{player.name} LV: {player.level}')
                         print(f'HP: {player.hp}/{player.max_hp}')
+                time.sleep(1)
                 if acting_player.is_alive and acting_player.get_all_enemies(self.players):
                     self.add_into_queue(acting_player, current_game_time)
             else:
@@ -344,17 +357,19 @@ if __name__ == '__main__':
     name = ''
     while name == '':
         name = input('>')
-    player1 = Ally(name=name, hp=5, max_hp=5, attack=3, speed=2, leveling_rate=1)
-    aqua = Ally(name='Aqua', hp=7, max_hp=7, attack=4, speed=3, leveling_rate=2)
-    krillin = Enemy(name='Krillin', hp=7, max_hp=7, attack=3, speed=2, leveling_rate=0)
-    yamcha = Enemy(name='Yamcha', hp=7, max_hp=7, attack=3, speed=1, leveling_rate=0)
-    anime_male = Enemy(name='Anime Male', hp=5, max_hp=5,attack=2, speed=2, leveling_rate=1)
+    player1 = Ally(name=name, hp=20, max_hp=20, attack=10, speed=2, leveling_rate=1)
+    aqua = Ally(name='Aqua', hp=20, max_hp=20, attack=12, speed=3, leveling_rate=2)
+    krillin = Enemy(name='Krillin', hp=20, max_hp=20, attack=9, speed=2, leveling_rate=0)
+    yamcha = Enemy(name='Yamcha', hp=20, max_hp=20, attack=9, speed=1, leveling_rate=0)
+    anime_male = Enemy(name='Anime Male', hp=20, max_hp=20, attack=9, speed=2, leveling_rate=1)
     battle = Battle(players=[player1, aqua, krillin, yamcha])
-    potion = Item('potion', 5)
+    potion = Item('potion', hp_restore=7, heal_status=False)
+    burn_heal = Item('Burn Heal', hp_restore=0, heal_status=True)
     battle1 = Battle(players=[player1, anime_male])
     battle1.run()
-    inventory.append(potion)
-    print(f'You found a {potion.name}')
+    inventory.append(potion.name)
+    inventory.append(burn_heal.name)
+    print(f'You found a {potion.name} and a {burn_heal.name}')
     print(f'{aqua.name} joined!')
     battle.run()
     time.sleep(5)
