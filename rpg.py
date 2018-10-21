@@ -1,10 +1,16 @@
+"""RGG that is made for fun of class"""
+
+# Import Statements----------------------------------------------------------------------------------------------------
 from dataclasses import dataclass, field
 from queue import PriorityQueue
 from typing import List, Tuple
 import random
 import time
+import sys
+import copy
 
 
+# Input Blocker--------------------------------------------------------------------------------------------------------
 def blocking_input(acceptable_responses: [str]) -> str:
     """calls input('>') until an appropriate input is selected
     :param acceptable_responses: the inputs that will get a go-ahead"""
@@ -15,21 +21,30 @@ def blocking_input(acceptable_responses: [str]) -> str:
     return output
 
 
-class Item:
-    """This will NOT just be potions,
-    there will be statuses to worry about and cure with items"""
+class Tower:
     def __init__(self,
                  name: str,
-                 hp_restore: int,
-                 heal_status: bool):
+                 hp: int,
+                 max_hp: int,
+                 attack: int,
+                 speed: float,
+                 status_effects: list,
+                 level: int):
         self.name = name
-        self.hp_restore = hp_restore,
-        self.heal_status = heal_status
+        self.hp = hp
+        self.max_hp = max_hp
+        self.attack = attack
+        self.speed = speed
+        self.status_effects = status_effects
+        self.level = level
+        self.splash = False
+        self.team = 1
+
+    def __copy__(self):
+        self.team = 2
 
 
-inventory = []
-
-
+# Character class-------------------------------------------------------------------------------------------------------
 class Character:
     """All the methods a character in the game can perform"""
     def __init__(self,
@@ -38,22 +53,21 @@ class Character:
                  max_hp: float,
                  attack: float,
                  speed: float,
-                 leveling_rate: int,
-                 exp: int,
-                 level_exp: int,
-                 team: int,
-                 level: int):
+                 status_effects: list,
+                 splash: bool,
+                 team: int):
         self.name = name
         self.hp = hp
         self.max_hp = max_hp
         self.attack = attack
         self.speed = speed
-        self.leveling_rate = leveling_rate
-        self.exp = exp
-        self.level_exp = level_exp
+        self.status_effects = status_effects
+        self.splash = splash
         self.team = team
-        self.level = level
-        self.is_burned = False
+        self.num_of_cards = 0
+        self.total_of_cards = 2
+        self.level = 1
+        self.team = 1
         """:param max_hp: hp of an unharmed player
         :param level: level of the player, 1-100 eventually
         :param exp: value of the current exp a player has
@@ -67,17 +81,13 @@ class Character:
         """returns true if the player is an ally"""
         return other_player.team == self.team
 
-    def deal_damage(self, other_player: 'Character', multiplier: float, burn_chance: int):
+    def deal_damage(self, other_player: 'Character'):
         """The base method for dealing damage to an enemy player
-        :param other_player: target of damage
-        :param multiplier: the multiplier of the damage dealt
-        :param burn_chance: target's chance of being burned in the attack"""
+        :param other_player: target of damage"""
         if other_player.is_alive():
-            other_player.hp -= (int(self.attack * multiplier))
-            other_player.is_burned = other_player.is_burned or (burn_chance > random.randint(1, 100))
-            print(f'{self.name} attacked {other_player.name} for {int(self.attack * multiplier)} damage!')
-            if other_player.is_burned:
-                print(f'{other_player.name} Received a burn!')
+            other_player.hp -= self.attack
+            print(f'{self.name} attacked {other_player.name}')
+
         return other_player
 
     def get_all_enemies(self, players: List['Character']) -> List[int]:
@@ -93,157 +103,19 @@ class Character:
             if all_enemy_locations:
                 targeted_index = all_enemy_locations[0]
                 targeted_player = players[targeted_index]
-                damaged_player = self.deal_damage(targeted_player, 1.0, 0)
+                damaged_player = self.deal_damage(targeted_player)
                 players[targeted_index] = damaged_player
-        return players
-
-
-class Ally(Character):
-    """This is a subclass of characters specific to team 1"""
-    def __init__(self,
-                 name: str,
-                 hp: int,
-                 max_hp: int,
-                 attack: int,
-                 speed: int,
-                 leveling_rate: int):
-        super().__init__(name,
-                         hp,
-                         max_hp,
-                         attack,
-                         speed,
-                         leveling_rate,
-                         exp=0,
-                         level_exp=200,
-                         team=1,
-                         level=1)
-        """:param leveling_rate: a multiplier of the level exp every time
-                    """
-
-    def act(self, players: List['Character']):
-        """the act method specific to team 1 or the allies"""
-
-        all_enemy_locations = self.get_all_enemies(players)
-        enemies = {character.name:
-                   character for character in players if character.team != 1}
-        if self.is_alive:
-            if all_enemy_locations:
-                if len(all_enemy_locations) == 1:  # if there is only one enemy in the battle:
-                    targeted_index = all_enemy_locations[0]
-                    targeted_player = players[targeted_index]
-                    print('Normal attack: 1')
-                    print('Special attack: 2')
-                    multiplier_input = blocking_input(['1', '2'])
-                    if multiplier_input == '1':
-                        self.deal_damage(targeted_player, multiplier=1.0, burn_chance=0)
-                    elif multiplier_input == '2':
-                        self.deal_damage(targeted_player, multiplier=1.3, burn_chance=10)
-                else:  # if there is more than one enemy in the battle:
-                    print('Who do you attack?')
-                    for player in players:
-                        if player.is_alive() and not player.is_ally(self):
-                            print(player.name)
-                    targeted_enemy = None
-                    while targeted_enemy is None:
-                        user_input = input('>')
-                        targeted_enemy = enemies.get(user_input)
-                    print('Normal attack: 1')
-                    print('Special attack: 2')
-                    multiplier_input = blocking_input(['1', '2'])
-                    if multiplier_input == '1':
-                        self.deal_damage(other_player=targeted_enemy, multiplier=1.0, burn_chance=0)
-                    elif multiplier_input == '2':
-                        self.deal_damage(other_player=targeted_enemy, multiplier=1.3, burn_chance=10)
-
-        return players
-
-    def move_input(self):
-        """an input at the beginning of the ally turn
-        which will ask to either fight, view inventory, or view stats"""
-        print('What will you do?')
-        print('[f]ight, [i]tem, [s]tats')
-        move_input = blocking_input(['f', 'i', 's'])
-        if move_input == 'f':
-            pass
-        elif move_input == 'i':
-            self.use_item()
-        elif move_input == 's':
-            self.get_stats()
-
-    def use_item(self) -> List:
-        """How the player can use an item to recover hp"""
-        if len(inventory) > 0:
-            print(inventory)
-            for item in inventory:
-                print(f'would you like to use {item}?')
-                print('[y]es or [n] no')
-                item_input = blocking_input(['y', 'n'])
-                if item_input == 'y':
-                    if self.hp < self.max_hp:
-                        self.hp = min(self.hp + potion.hp_restore, self.max_hp)
-                        print(f'{self.name}\'s hp was restored')
-                    if self.is_burned is True:
-                        if burn_heal.heal_status is True:
-                            self.is_burned = False
-                            print(f'{self.name}\'s burn was healed')
-                        inventory.remove(item)
-                    else:  # If the player's hp is already full, they shouldn't be able to use the potion
-                        print('It won\'t help')
-                elif item_input == 'n':
-                    pass
-        else:
-            print('Your inventory is empty')
-        return inventory
-
-    def get_stats(self):
-        """prints out the player's important stats"""
-        if self.is_alive():
-            stats = {
-                'name': self.name,
-                'hp/max hp': f'{self.hp}/{self.max_hp}',
-                'speed': self.speed
-            }
-            print(stats)
-            print()
-            return stats
-
-
-class Enemy(Character):
-    # another subclass of character
-    """this is a subclass of characters specific to team 2"""
-    def __init__(self,
-                 name: str,
-                 hp: int,
-                 max_hp: int,
-                 attack: int,
-                 speed: int,
-                 leveling_rate: int):
-        super().__init__(name,
-                         hp,
-                         max_hp,
-                         attack,
-                         speed,
-                         leveling_rate,
-                         exp=0,
-                         level_exp=200,
-                         team=2,
-                         level=1)
-
-    def act(self, players: List['Character']):
-        """The act method specific to the enemy characters"""
-        all_enemy_locations = self.get_all_enemies(players)
-        if all_enemy_locations:
-            targeted_index = random.choice(all_enemy_locations)
-            targeted_player = players[targeted_index]
-            enemy_damage = random.randint(1, 2)
-            if enemy_damage == 1:
-                self.deal_damage(other_player=targeted_player, multiplier=1.0, burn_chance=0)
-            elif enemy_damage == 2:
-                self.deal_damage(other_player=targeted_player, multiplier=1.3, burn_chance=10)
+                if self.splash is True:
+                    for i in range(0, len(all_enemy_locations)):
+                        targeted_indexes = all_enemy_locations[i]
+                        targeted_players = players[targeted_indexes]
+                        damaged_players = self.deal_damage(targeted_players)
+                        players[targeted_indexes] = damaged_players
 
         return players
 
 
+# How the battle runs--------------------------------------------------------------------------------------------------
 @dataclass(order=True)
 class Move:
     """Handles the priority Queue"""
@@ -273,49 +145,12 @@ class Battle:
         """true if the battle is over"""
         return self.battle_queue.empty()
 
-    def victory(self) -> bool:
-        """returns true if the allies win"""
-        if self.is_over():
-            if player1.is_alive() or aqua.is_alive():
-                victory = True
-                return victory
-
-    def defeat(self) -> bool:
-        """Returns true if the enemies win"""
-        if self.is_over():
-            if player1.get_all_enemies(self.players):
-                defeat = True
-                return defeat
-
-    def level_up(self):
-        """Method to check the player's exp
-        add exp when a fight is won
-        and level up when the exp reaches it's target value"""
-        exp_gain = 200
-        for player in self.players:
-            if player.is_alive():
-                player.exp += exp_gain
-                print(f'{player.name} gained {exp_gain} experience points!')
-                if player.exp >= player.level_exp:
-                    print(f'{player.name} leveled up!')
-                    player.level += 1
-                    print(f'{player.name} LV: {player.level}')
-                    player.max_hp += 2
-                    player.hp = player.max_hp
-                    player.attack += 1
-                    player.speed += 1
-                    player.level_exp *= (player.leveling_rate * 2)
-                    player.exp = 0
-                    print(f'HP: {player.hp}/{player.max_hp}')
-                    print(f'New attack: {player.attack}')
-                    print(f'New speed: {player.speed}')
-
     def run(self):
         """Makes the battle loop while it's not over"""
-        print(f'{[player.name for player in self.players if player.team != 1]} appeared!')
+        print(f'{[player.name for player in self.players if player.team == 1]} vs '
+              f'{[player.name for player in self.players if player.team == 2]}')
         # Empty print statements are to separate texts in the console
         # To improve readability during the program's running
-        print()
         for player in self.players:
             self.add_into_queue(player=player, game_time=0)
 
@@ -324,52 +159,33 @@ class Battle:
             if acting_player.is_alive():
                 if acting_player.team == 1:
                     print(f'{acting_player.name}\'s turn')
-                    print()
-                    acting_player.move_input()
                     acting_player.act(self.players)
-                else:
-                    print(f'{acting_player.name}\'s turn')
-                    acting_player.act(self.players)
-                if acting_player.is_burned is True:
-                    acting_player.hp -= 1
-                    print(f'{acting_player.name} was burned for 1 damage!')
-                print()
-                for player in self.players:
-                    if player.is_alive():
-                        print(f'{player.name} LV: {player.level}')
-                        print(f'HP: {player.hp}/{player.max_hp}')
-                time.sleep(1)
                 if acting_player.is_alive and acting_player.get_all_enemies(self.players):
                     self.add_into_queue(acting_player, current_game_time)
             else:
                 print(f'{acting_player.name} is dead')
             print()
 
-        if self.victory():
-            print('You win!')
-            self.level_up()
-        if self.defeat():
-            print('You lose!')
+        print('Match Over')
 
 
+# Main Loop------------------------------------------------------------------------------------------------------------
 if __name__ == '__main__':
-    print('What is your name?')
-    name = ''
-    while name == '':
-        name = input('>')
-    player1 = Ally(name=name, hp=20, max_hp=20, attack=10, speed=2, leveling_rate=1)
-    aqua = Ally(name='Aqua', hp=20, max_hp=20, attack=12, speed=3, leveling_rate=2)
-    krillin = Enemy(name='Krillin', hp=20, max_hp=20, attack=9, speed=2, leveling_rate=0)
-    yamcha = Enemy(name='Yamcha', hp=20, max_hp=20, attack=9, speed=1, leveling_rate=0)
-    anime_male = Enemy(name='Anime Male', hp=20, max_hp=20, attack=9, speed=2, leveling_rate=1)
-    battle = Battle(players=[player1, aqua, krillin, yamcha])
-    potion = Item('potion', hp_restore=7, heal_status=False)
-    burn_heal = Item('Burn Heal', hp_restore=0, heal_status=True)
-    battle1 = Battle(players=[player1, anime_male])
-    battle1.run()
-    inventory.append(potion.name)
-    inventory.append(burn_heal.name)
-    print(f'You found a {potion.name} and a {burn_heal.name}')
-    print(f'{aqua.name} joined!')
+    king_tower = Tower(name='King Tower', hp=1200, max_hp=1200, attack=55, speed=10, status_effects=[], level=1)
+    crown_tower = Tower(name='Crown Tower', hp=950, max_hp=950, attack=55, speed=8, status_effects=[], level=1)
+    crown_tower2 = copy.copy(crown_tower)
+    arch = Character(name='Archer', max_hp=240, hp=240, attack=70, speed=20, status_effects=[], splash=False, team=1)
+    wizz = Character(name='Wizard', max_hp=400, hp=400, attack=170, speed=18, status_effects=[], splash=True, team=1)
+    mega_min = Character(name='Mega Minion', max_hp=490, hp=490, attack=152, speed=16, status_effects=[], splash=False,
+                         team=1)
+    arch2 = copy.deepcopy(arch)
+    arch2.name = 'Archer 2'
+    arch2.team = 2
+    wizz2 = copy.deepcopy(wizz)
+    wizz2.name = 'Wizard 2'
+    wizz2.team = 2
+    mega_min2 = copy.deepcopy(mega_min)
+    mega_min2.name = 'Mega Minion 2'
+    mega_min2.team = 2
+    battle = Battle(players=[arch, wizz, mega_min, arch2, wizz2, mega_min2])
     battle.run()
-    time.sleep(5)
