@@ -21,27 +21,13 @@ def blocking_input(acceptable_responses: [str]) -> str:
     return output
 
 
-class Tower:
-    def __init__(self,
-                 name: str,
-                 hp: int,
-                 max_hp: int,
-                 attack: int,
-                 speed: float,
-                 status_effects: list,
-                 level: int):
-        self.name = name
-        self.hp = hp
-        self.max_hp = max_hp
-        self.attack = attack
-        self.speed = speed
-        self.status_effects = status_effects
-        self.level = level
-        self.splash = False
-        self.team = 1
-
-    def __copy__(self):
-        self.team = 2
+def dialogue_input():
+    text_input = None
+    while text_input is None:
+        text_input = blocking_input([''])
+        if text_input == '':
+            break
+    return text_input
 
 
 # Character class-------------------------------------------------------------------------------------------------------
@@ -53,21 +39,14 @@ class Character:
                  max_hp: float,
                  attack: float,
                  speed: float,
-                 status_effects: list,
-                 splash: bool,
                  team: int):
         self.name = name
         self.hp = hp
         self.max_hp = max_hp
         self.attack = attack
         self.speed = speed
-        self.status_effects = status_effects
-        self.splash = splash
         self.team = team
-        self.num_of_cards = 0
-        self.total_of_cards = 2
         self.level = 1
-        self.team = 1
         """:param max_hp: hp of an unharmed player
         :param level: level of the player, 1-100 eventually
         :param exp: value of the current exp a player has
@@ -87,7 +66,6 @@ class Character:
         if other_player.is_alive():
             other_player.hp -= self.attack
             print(f'{self.name} attacked {other_player.name}')
-
         return other_player
 
     def get_all_enemies(self, players: List['Character']) -> List[int]:
@@ -105,12 +83,56 @@ class Character:
                 targeted_player = players[targeted_index]
                 damaged_player = self.deal_damage(targeted_player)
                 players[targeted_index] = damaged_player
-                if self.splash is True:
-                    for i in range(0, len(all_enemy_locations)):
-                        targeted_indexes = all_enemy_locations[i]
-                        targeted_players = players[targeted_indexes]
-                        damaged_players = self.deal_damage(targeted_players)
-                        players[targeted_indexes] = damaged_players
+
+        return players
+
+
+class Ally(Character):
+    def __init__(self,
+                 name: str,
+                 hp: float,
+                 max_hp: float,
+                 attack: float,
+                 speed: float):
+        super().__init__(name, hp, max_hp, attack, speed, team=1)
+
+    def act(self, players: List):
+        all_enemy_locations = self.get_all_enemies(players)
+        if self.is_alive():
+            if all_enemy_locations:
+                print('Who do you attack?')
+                target_input = None
+                while target_input is None:
+                    target_input = input('>')
+                    try:
+                        targeted_index = all_enemy_locations[int(target_input)]
+                        targeted_player = players[targeted_index]
+                        damaged_player = self.deal_damage(targeted_player)
+                        players[targeted_index] = damaged_player
+                    except ValueError:
+                        print('That is not a valid target')
+                        target_input = None
+
+        return players
+
+
+class Enemy(Character):
+    def __init__(self,
+                 name: str,
+                 hp: float,
+                 max_hp: float,
+                 attack: float,
+                 speed: float):
+        super().__init__(name, hp, max_hp, attack, speed, team=2)
+
+    def act(self, players: List):
+        all_enemy_locations = self.get_all_enemies(players)
+        if self.is_alive():
+            if all_enemy_locations:
+                targeted_index = random.choice(all_enemy_locations)
+                targeted_player = players[targeted_index]
+                damaged_player = self.deal_damage(targeted_player)
+                players[targeted_index] = damaged_player
 
         return players
 
@@ -126,11 +148,11 @@ class Move:
 class Battle:
     """list of characters, and order of moves"""
 
-    def __init__(self, players: List[Character]):
+    def __init__(self, players: List['Character']):
         self.players = players
         self.battle_queue = PriorityQueue()
 
-    def add_into_queue(self, player: Character, game_time: int) -> None:
+    def add_into_queue(self, player: Character, game_time: float) -> None:
         """adds a player back based on game time
         faster players go first"""
         move = Move(priority=game_time + 1/player.speed, player=player)
@@ -147,8 +169,8 @@ class Battle:
 
     def run(self):
         """Makes the battle loop while it's not over"""
-        print(f'{[player.name for player in self.players if player.team == 1]} vs '
-              f'{[player.name for player in self.players if player.team == 2]}')
+        print(f'{player.name for player in self.players if player.team == 1} vs '
+              f'{player.name for player in self.players if player.team == 2}')
         # Empty print statements are to separate texts in the console
         # To improve readability during the program's running
         for player in self.players:
@@ -157,35 +179,39 @@ class Battle:
         while not self.is_over():
             acting_player, current_game_time = self.get_from_queue()
             if acting_player.is_alive():
-                if acting_player.team == 1:
-                    print(f'{acting_player.name}\'s turn')
-                    acting_player.act(self.players)
+                print(f'{acting_player.name}\'s turn')
+                acting_player.act(self.players)
+                print()
+                for player in self.players:
+                    if player.is_alive():
+                        print(f'{player.name} LV: {player.level}')
+                        print(f'HP: {int(player.hp)}/{player.max_hp}')
                 if acting_player.is_alive and acting_player.get_all_enemies(self.players):
                     self.add_into_queue(acting_player, current_game_time)
             else:
                 print(f'{acting_player.name} is dead')
             print()
-
-        print('Match Over')
+        if PC.is_alive():
+            print('You win!')
+        else:
+            print('You died!')
 
 
 # Main Loop------------------------------------------------------------------------------------------------------------
 if __name__ == '__main__':
-    king_tower = Tower(name='King Tower', hp=1200, max_hp=1200, attack=55, speed=10, status_effects=[], level=1)
-    crown_tower = Tower(name='Crown Tower', hp=950, max_hp=950, attack=55, speed=8, status_effects=[], level=1)
-    crown_tower2 = copy.copy(crown_tower)
-    arch = Character(name='Archer', max_hp=240, hp=240, attack=70, speed=20, status_effects=[], splash=False, team=1)
-    wizz = Character(name='Wizard', max_hp=400, hp=400, attack=170, speed=18, status_effects=[], splash=True, team=1)
-    mega_min = Character(name='Mega Minion', max_hp=490, hp=490, attack=152, speed=16, status_effects=[], splash=False,
-                         team=1)
-    arch2 = copy.deepcopy(arch)
-    arch2.name = 'Archer 2'
-    arch2.team = 2
-    wizz2 = copy.deepcopy(wizz)
-    wizz2.name = 'Wizard 2'
-    wizz2.team = 2
-    mega_min2 = copy.deepcopy(mega_min)
-    mega_min2.name = 'Mega Minion 2'
-    mega_min2.team = 2
-    battle = Battle(players=[arch, wizz, mega_min, arch2, wizz2, mega_min2])
+    print('What is your name?')
+    name_input = input('>')
+
+    PC = Ally(name=name_input, hp=20, max_hp=20, attack=4, speed=5)
+    print('You wake in your bed.')
+    dialogue_input()
+    print('You decide to get onto your computer.')
+    dialogue_input()
+    print('Suddenly, as you turn the computer on, you\'re transported to an unfamiliar world.')
+    dialogue_input()
+    print('"Welcome to the Algorithm." You hear a voice saying out of nowhere.')
+    dialogue_input()
+    print('Suddenly an apparition appears and attacks!')
+    anime_male = Enemy(name='Anime Male', hp=20, max_hp=20, attack=3, speed=5)
+    battle = Battle(players=[PC, anime_male])
     battle.run()
